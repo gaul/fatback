@@ -19,12 +19,10 @@ void cmd_lostchains(int argc, char *argv[])
 {
      unsigned long i, fatsize, num_clusts;
      int found = 0;
-     fs_id_t fs_id;
 
      /* determine what the last cluster will be */
      fatsize = vbr->bytes_per_sect;
      fatsize *= vbr->sects_per_fat;
-     fs_id = get_fs_type(vbr);
      switch (get_fs_type(vbr)) {
      case VBR_FAT12:
           num_clusts = (fatsize * 2) / 3;

@@ -54,7 +54,7 @@ int display(displaylevel_t level, char *format, ...)
      /* get the verbosity level from the fatback symbol table */
      if (!(verbose_var = get_fbvar("verbose"))) {
           printf("Error reading variable\n");
-          return;
+          return -1;
      } else {
           verbose = verbose_var->val.ival;
           free(verbose_var);
@@ -80,7 +80,7 @@ void ticmarker(void)
      static int currtic;
 
      printf("\r%c", tics[currtic]);
-     currtic = ++currtic % numtics;
+     currtic = (currtic + 1) % numtics;
 }
 
 /*

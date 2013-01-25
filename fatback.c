@@ -26,10 +26,9 @@ static char *fatback_version = "(Unknown)";
 #include "lfn.h"
 #include "vars.h"
 
-static void print_dirtree(dirent_t *);
+static void print_dirtree(dirent_t *) __attribute__ ((used));
 static void print_help(char *);
 static void print_ver(void);
-static void print_shortver(void);
 static char *gen_opts(struct option *);
 static char *str_cons(char *, char);
 

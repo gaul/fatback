@@ -68,7 +68,7 @@ int extract_file(
      } else if (strcmp(fname, filename) != 0)
           display(VERBOSE, log_nametaken, filename, cluster, fname);
 
-     if ((file = open(fname, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) == NULL) {
+     if ((file = open(fname, O_WRONLY|O_CREAT|O_EXCL, S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR)) == -1) {
           perror("Error");
           free(fname);
           return -1;

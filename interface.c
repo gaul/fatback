@@ -117,7 +117,7 @@ int process_commands(void)
           free(prompt);
           if (!line)
                break;
-          if (pipe_command = pipe_scan(line)) {
+          if ((pipe_command = pipe_scan(line)) != NULL) {
                if ((tmp_pipe = popen(pipe_command, "w")) == NULL) {
                     perror("cannot create pipe");
                     break;
