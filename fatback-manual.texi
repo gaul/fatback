@@ -1,0 +1,1014 @@
+\input texinfo    @c -*-texinfo-*-
+@c %**start of header
+@setfilename fatback-manual.info
+@settitle Fatback
+@setchapternewpage even
+@c %**end of header
+
+@syncodeindex vr pg
+
+@set fatback-version 1.3
+@set manual-edition 1.2
+
+@dircategory Forensics
+@direntry
+* Fatback: (fatback-manual).       A forensic tool for recovering files from FAT file systems.
+@end direntry
+
+@ifinfo
+This file documents the user interface to fatback, the forensic tool for
+undeleting files from FAT file systems.
+
+Copyright @copyright{} 2000-2001 DoD Computer Forensics Lab
+This manual and the Fatback program are for @strong{government and law
+enforcement use only}.
+@end ifinfo
+
+@titlepage
+@title Fatback
+@subtitle The premier UNIX tool for undeleting files from FAT file systems
+@subtitle Manual edition @value{manual-edition} for Fatback @w{v
+@value{fatback-version}}
+@author SrA Nicholas Harbour @sc{(USAF)}
+
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 2000-2001 DoD Computer Forensics Lab
+This manual and the Fatback program are for @strong{government and law
+enforcement use only}.
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top, Overview, (dir), (dir)
+@comment  node-name,  next,  previous,  up
+
+@top Fatback
+
+Fatback is a tool for undeleting files from Microsoft FAT file systems.
+
+This is the users manual edition @value{manual-edition} for Fatback
+@w{v@value{fatback-version}}
+@end ifnottex
+
+@menu
+* Overview::
+* FAT File System Basics::
+* Using Fatback::
+* Concept Index::
+* Command and Variable Index::
+@end menu
+
+@node Overview, FAT File System Basics, Top, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Overview
+@cindex Features
+
+Fatback is a forensic tool for undeleting files from Microsoft FAT file
+systems.  Fatback is different from other undelete tools in that it does
+the following:
+@itemize @bullet
+@item
+Runs under UNIX environments (only Linux and FreeBSD tested so far)
+@item
+Can undelete files automatically
+@item
+Supports Long File Names
+@item
+Supports FAT12, FAT16, and FAT32
+@item
+Powerful interactive mode
+@item
+Recursively undeletes deleted directories
+@item
+Recovers lost cluster chains
+@item
+Works with single partitions or whole disks
+@end itemize
+
+Fatback was developed by the U.S. Department of Defense Computer Forensics
+Laboratory (@url{http://www.dcfl.gov}) and is authorized for @strong{government
+and law enforcement use only}.
+
+@menu
+* How to use this manual::
+* Acknowledgments::
+@end menu
+
+@node How to use this manual, Acknowledgments, Overview, Overview
+@comment  node-name,  next,  previous,  up
+@section How to use this manual
+@cindex Manual layout
+
+This manual has two parts.  The first part discusses how the FAT file system
+and MS DOS partitions work, as well as how files can be undeleted.  The second
+part is the documentation for the Fatback program itself.  Users who are
+inexperienced with the FAT file system are encouraged to read the first part.
+More seasoned veterans of forensics might also find it to be a handy reference
+when working with some of the more advanced features of Fatback.
+
+@node Acknowledgments,  , How to use this manual, Overview
+@comment  node-name,  next,  previous,  up
+@section Acknowledgments
+
+My deepest gratitude goes to Gord Hama from the Royal Canadian Mounted Police
+and to Jason Luttgens from @sc{nasa}@.  These individuals helped me immensely
+in understanding the semantics of undeleting files.  I would also like to
+thank all the people who helped me in testing the program, I am forever
+indebted.
+
+@node FAT File System Basics, Using Fatback, Overview, Top
+@comment  node-name,  next,  previous,  up
+@chapter FAT File System Basics
+@cindex FAT File systems
+
+Learning to use Fatback requires that a user must have a basic understanding
+of how Microsoft style disk partitioning and the FAT file system work.  This
+chapter is intended to help less experienced users fulfill that prerequisite
+@footnote{It is recommended that you have knowledge of what a @dfn{file system}
+is, and what a @dfn{partition} is before continuing.}.
+
+@menu
+* Partitions::
+* Volume Boot Records::
+* FAT Tables::
+* Directories::
+* Undelete Methodology::
+@end menu
+
+@node Partitions, Volume Boot Records, FAT File System Basics, FAT File System Basics
+@comment  node-name,  next,  previous,  up
+@section Partitions
+@cindex Partitions
+
+@cindex Logical drives
+Early version of DOS only supported up to four partitions per disk drive.
+This was because they had to fit the partition table and initial boot program
+had to fit into a single 512 byte sector.  Twenty years later things still
+work pretty much the same, except for one new change.  One of the four
+partitions can be an extended partition which tells where more partitions can
+be found.  MS DOS calls partitions that live within and extended partition
+@dfn{Logical Drives}.  The only terminology I will use is in this text is
+@dfn{partition}, because all partitions are created equal.
+
+@cindex @code{fdisk}
+@cindex DiskEdit
+The @code{fdisk} program provides a way to add and delete partitions, as well
+as modify the system indicator byte and bootable flag.  However, for more
+advanced editing, a hex editor or the Norton DiskEdit program are much better
+solutions.
+
+@menu
+* Partition Table Contents::
+* Extended Partitions::
+@end menu
+
+@node Partition Table Contents, Extended Partitions, Partitions, Partitions
+@comment  node-name,  next,  previous,  up
+@subsection Partition Table Contents
+@cindex Partition tables
+A partition table consists of four 16 Byte entries.  Each entry contains the
+following data:
+@table @var
+@item Bootable Partition Flag
+@cindex Bootable partition flag
+The bootable flag lets the DOS boot loader know that the partition can be
+booted.  MS DOS requires that only one partition be marked as bootable or
+@dfn{active}.  If more than one partition is marked active a message like
+@samp{Invalid partition table}.
+
+@item Starting CHS
+@cindex CHS
+The starting CHS@footnote{CHS stands for Cylinder/Head/Sector used in
+referencing physical drive geometry.  For more information read @cite{Upgrading
+and Repairing PCs} by Scott Mueller, published by QUE Corporation.} tells where
+the partition starts on the hard drive physically.
+
+@item System Indicator Byte
+@cindex System indicator byte
+The system indicator is a single byte that describes the file system that
+resides on the partition.  Each file system type has a file system ID.  For
+instance, a primary FAT 16 partition that is larger than 32 Mb would have a
+file system ID of 06h.  One major limitation of the system indicator byte is
+that it is only 8 bits, which provides only 256 unique file system types.
+Setting this byte in a partition table entry to a value that is unrecognized
+by DOS would make DOS ignore that file system.
+
+@item Ending CHS
+The ending CHS tells where the partition ends on the hard drive physically.
+
+@item Relative Sector Offset
+@cindex Relative sector offset
+The relative sector offset is the number of sectors before the partition on the
+disk.  It could also be described as the number of sectors between the starting
+CHS and cylinder 0, head 0, sector 1.
+
+@item Sector Count
+The total number of sectors in the partition
+@end table
+
+@node Extended Partitions,  , Partition Table Contents, Partitions
+@comment  node-name,  next,  previous,  up
+@subsection Extended Partitions
+@cindex Extended partitions
+@cindex Master boot record
+The primary partition table of a hard drive resides in the first sector of the
+hard drive, which is known as the @dfn{Master Boot Record}, or @dfn{MBR}@.  One
+entry in the primary partition table may be an extended partition.  An extended
+partition is a partition that can hold a chain of other partitions within it.
+The first sector of an extended partition contains a partition table which is
+of the same form as the primary partition table.
+
+The convention used by MS DOS is to only use the first two entries in partition
+tables within the extended partition.  The first entry will define a usable
+partition (if any).  If another partition after the current one exists in the
+extended partition, then the second entry in the partition table will point
+to the next partition table.  Otherwise, it will be blank, indicating that it
+is the last partition in the chain.
+
+MS DOS stops parsing a partition table when it has either read four entries, or
+encountered a blank entry.  A partition can be hidden by being placed after a
+blank entry.
+
+@node Volume Boot Records, FAT Tables, Partitions, FAT File System Basics
+@comment  node-name,  next,  previous,  up
+@section Volume Boot Records
+@cindex Volume boot records
+The first sector of a partition is call a @dfn{Volume Boot Record}, or
+@dfn{VBR}@.  The purpose of the volume boot record is to describe a FAT file
+system.  It does so with the following data:
+
+@table @var
+@item DOS Version
+The DOS version string is an 8 byte ASCII text string that identifies the
+manufacturer and version of the operating system used to create the file
+system.
+
+@item Bytes per Sector
+The bytes per sector value represents the number of bytes that are in each
+sector of the media that the file system was created on.  This is typically
+set to 512.
+
+@item Sectors per Cluster
+The sectors per cluster value represents the number of physical sectors that
+are in each cluster.  Clusters are the basic allocation unit of the FAT file
+system. @xref{FAT Tables}, for more information on clusters.
+
+@item Maximum Root Directory Entries
+@cindex Maximum root directory entries
+In the FAT12 and FAT16 file systems, a root directory is a fixed size.  This
+value represents the number of 32 byte entries the root directory can hold.
+FAT32 systems support a variable size root directory, and therefore this field
+is meaningless in that file system.
+
+@item Media Descriptor Byte
+@cindex Media descriptor byte
+Some DOS version use the media descriptor byte to determine the characteristics
+of the disk drive in which the partition resides.  For example hard disk drives
+will have a media descriptor byte value of F8h and a 3 1/2" floppy disk may
+have a value of F0h.
+
+@item Volume Serial Number
+@cindex Volume serial number
+The volume serial number is a 32-bit randomly generated number used to uniquely
+identify a file system.
+
+@item Volume Label
+@cindex Volume label
+@cindex @code{format}
+The volume label string is an 11 byte ASCII text string that identifies the
+file system to DOS.  This value is input by the user upon execution of the
+@code{format} command.
+
+@item File System ID
+@cindex File system ID byte
+The file system ID string is an 8 byte ASCII text string that describes the
+file system that resides on that partition.  One must be aware, however, that
+operating systems do not use this string to determine the file system of the
+drive and is essentially useless.
+@end table
+
+@node FAT Tables, Directories, Volume Boot Records, FAT File System Basics
+@comment  node-name,  next,  previous,  up
+@section File Allocation Tables
+@cindex FAT tables
+Immediately following a volume boot record in a partition, comes the file
+allocation tables (@dfn{FAT tables} abbreviated).  There are almost always two
+FAT tables per file system.  The system only actively uses one FAT table,
+and so the other FAT tables serve as back-ups.
+
+@cindex clusters
+Despite the name @emph{file} allocation table, the purpose of the FAT table
+is not to allocate files, but rather to allocate and manage the linkage of
+@dfn{clusters}.  Clusters are the basic unit of storage of the FAT file system.
+They are made up of one or more physical sectors, how many depends on how large
+the file system is.  For example, on a 720 KB floppy disk the cluster size
+would probably be 2 sectors, and on a hard disk partition, probably 4 or more
+sectors.
+
+The numbers 12, 16, and 32 that usually follow the word FAT in describing the
+exact version of file system refer to the number of bits that represent each
+cluster number in the FAT table.  The FAT table is simply a linear array of
+numbers who's index represents a cluster on the disk.  For example in a FAT16
+file system, the fiftieth 16 bit value in the FAT table would correspond to the
+fiftieth cluster in the file system.
+
+The allocation of a cluster is determined through the value its FAT table
+entry.  Unused cluster should have a FAT table value of 0, while used clusters
+should have either the number of another cluster, or the EOF@footnote{not the
+same as the EOF character used in the ASCII text encoding system.} value.
+
+If the value of a FAT table entry is set to a cluster number, it is said to be
+@dfn{chained} to that cluster.  The cluster that the value of the entry refers
+to represents the next block of data in a file.  The repeated iteration of this
+process creates @dfn{cluster chains}.
+
+When a file is written to a FAT file system, the operating system must first
+determine how many clusters it will take to hold the contents of that file.
+For example on a file system with a cluster size of 2048 bytes (four 512 byte
+sectors), a 5000 byte file would take three clusters to hold its contents.
+
+@node Directories, Undelete Methodology, FAT Tables, FAT File System Basics
+@comment  node-name,  next,  previous,  up
+@section Directories
+@cindex Directories
+FAT file systems store directory information as a list of 32 byte directory
+entries, terminated by a null entry or the end of the cluster chain.
+
+@menu
+* Directory Entries::
+* Long File Names::
+@end menu
+
+@node Directory Entries, Long File Names, Directories, Directories
+@comment  node-name,  next,  previous,  up
+@subsection Directory Entries
+@cindex Directory entries
+Directory entries can be either files, directories, or under more modern DOS
+systems, long file name fragments (@pxref{Long File Names}).  Each entry that
+is a file or directory contains the following data:
+
+@table @var
+@item File Name
+@cindex File names
+MS DOS names files in two parts, the file name, and the extension.  The
+accepted convention is to separate these fields with the "." character, however
+in a directory entry, there is no such character.  One must note that in a
+directory entry, the extension field immediately follows the file name field.
+For example, if you created a file named @file{MYREPORT.DOC}, it would look
+like @file{MYREPORTDOC} in the raw directory.
+
+@item Attributes
+@cindex File attributes
+File attributes are stored in an 8 bit field of the directory entry, with each
+bit representing a flag.  Out of the eight possible flags, only six are widely
+used by DOS systems.
+
+@cindex @code{attrib}
+Attributes of a file can be viewed within a DOS environment using the
+@code{attrib} command.  It is also one of the only ways to list hidden files.
+
+@table @var
+@item Read-Only
+Files with read-only attribute set can not be written to by normal DOS systems.
+
+@item Hidden
+The hidden flag hides files from normal viewing.  This is common among system
+files.
+
+@item System
+When a system file has the system attribute set, normal directory operations
+will skip over it, making it harder to accidentally ruin your system.
+
+@item Volume
+The volume attribute is used to indicate that a directory entry is the label
+for the volume in which it resides.  The volume label is only allowed to exist
+in the root directory.
+
+@item Sub Directory
+An entry must have the sub directory attribute set in its directory entry in
+order to be treated as a directory.  It also makes the file unable to be opened
+by conventional means.  Operating systems usually provided special interfaces
+for opening directories.
+
+@item Archive
+The archive flag is used by backup programs to tell whether a file should be
+backed up.  In most cases, when a backup program backs up a file, it turns off
+this flag, and when the file gets modified the flag gets turned back on to
+indicate that it has changed and needs backing up.
+@end table
+
+@item Time and Date of Creation
+The creation time and date field keeps track of the when the file was created,
+or last modified.
+
+@item Starting Cluster
+The starting cluster field marks where the data for the given entry actually
+resides by indicating the first cluster in a cluster chain (@pxref{FAT Tables},
+for information about cluster chains).
+
+@item File Size
+The file size field tells how much data is in the given file (in bytes).  For
+entries that are sub directories, this field is 0.  Directories have no need
+for file size as they are terminated by a null entry or the end of a cluster
+chain.
+
+@end table
+
+@menu
+* Long File Names::
+@end menu
+
+@node Long File Names,  , Directory Entries, Directories
+@comment  node-name,  next,  previous,  up
+@subsection Long File Names
+@cindex Long file names
+@cindex UNICODE
+Long file names are @dfn{UNICODE}@footnote{UNICODE is a text encoding system
+using multiple bytes of data to represent each character to provide a larger
+character set than the 255 character ASCII set.  UNICODE is often used for
+languages other than English.} names that can be up to 819 characters per name.
+To achieve this, the names are split up into 32 byte fragments that fit into
+directory entries, and placed in the directory in reverse order with the
+associated file entry immediately following.
+
+Long file name fragments can be identified by the attributes field, which will
+have the Read-Only, Hidden, System, and Volume flags set.
+
+@node Undelete Methodology,  , Directories, FAT File System Basics
+@comment  node-name,  next,  previous,  up
+@section Undelete Methodology
+@cindex Undelete methodology
+You do not need to know the detailed semantics of how files are undeleted to
+use the Fatback program.  However, if you seek a better understanding of what
+is involved in undeleting files and directories, then you will be interested in
+the information presented in this section.
+@sp 1
+All methods of undeleting presented here require the recovery of cluster chains
+ (@pxref{FAT Tables}, for more info on cluster chains).  Recovering cluster
+chains is not guaranteed to give you accurate data.  If another file or
+directory in the file system has used a cluster in the chain since the file was
+deleted, that cluster will no longer be valid data to recover.  In order to
+tell if a file is able to be recovered accurately, you need to know what files
+are using which clusters.  It is this reason that hand recovering files is not
+a very productive use of your time.
+@menu
+* How Files Can Be Recovered::
+* How Directories Can Be Recovered::
+@end menu
+
+@node How Files Can Be Recovered, How Directories Can Be Recovered, Undelete Methodology, Undelete Methodology
+@comment  node-name,  next,  previous,  up
+@subsection How Files Can Be Recovered
+@cindex Methods of recovering files
+@cindex Sigma character
+When a file or directory is deleted from a FAT file system, the first letter of
+its file name is set to the sigma character (ASCII 0xE5).  All of the
+information with the exception of the first character remains in tact.
+
+A more devious method of hiding a file is to place the entry after a blank
+entry in a directory.  Then, when an operating system reads the directory, it
+will stop reading the directory before reaching the hidden entry.  This should
+not happen by default on DOS systems.  For a file to be hidden in this fashion
+would require either special tools or manual directory manipulation.
+
+In most cases, a deleted file can be recovered by simply copying the cluster
+chain that is referenced by the file entry.
+
+@node How Directories Can Be Recovered,  , How Files Can Be Recovered, Undelete Methodology
+@comment  node-name,  next,  previous,  up
+@subsection How Directories Can Be Recovered
+@cindex Methods of recovering directories
+The cluster chain that a file entry points to remains in tact after the file is
+deleted.  The opposite, however, occurs for directories.  Upon deleting a
+directory entry, the first cluster that the entry points to has a FAT table
+value of that represents that the cluster is unused instead of the EOF marker
+or the number of the next cluster in the chain.  This makes it difficult to
+recover deleted directory information beyond the first cluster.
+
+Using a trained eye, some directories can be fully reconstructed.  Take, for
+example, the following case:
+
+@quotation
+You want to recover a directory, but only the first cluster can easily be
+identified.  Upon examination of the contents of this cluster, you find that
+the last few directory entries are the files @file{MYFILE1.TXT},
+@file{MYFILE2.TXT}, and @file{MYFILE3.TXT}@.  Seeing as how the cluster is
+completely used by entries, your keen skills and experience lead you to
+believe that there is more to this directory than this cluster.  You search
+for lost cluster chains in the file system.  You then sift through the list,
+eliminating those which do not appear to be directory data.  Out of the
+remaining lost chains, you notice that one of them starts with the files
+@file{MYFILE4.TXT} and @file{MYFILE5.TXT}.  You make note of the starting
+cluster of that chain.  Then you edit the FAT table and change the entry for
+the first cluster of the directory from unused to the cluster number of the
+newly found chain.  You take a moment to gaze upon your victory, as you have
+just successfully reconstructed a deleted directory.
+@end quotation
+
+@cindex Sub directories
+@cindex @file{.}
+@cindex @file{..}
+Each sub directory begins with two entries.  One entry for the current
+directory (the @file{.} entry), and one entry for the parent directory (the
+@file{..} entry).  Another technique to find sub directories that may be missed
+by other methods is to search for one of these entries in free clusters.  These
+entries can be uniquely identified by a single dot followed by ten spaces or
+two dots followed by nine spaces.  This is due to the fact that the file name
+field of a directory is eleven characters long.  @xref{Directory Entries}.
+
+@node Using Fatback, Concept Index, FAT File System Basics, Top
+@comment  node-name,  next,  previous,  up
+@chapter Using Fatback
+@cindex Using Fatback
+
+@cindex Automated mode
+@cindex Interactive mode
+In order to cater to users with a variety of experience levels, Fatback
+provides two ways of interacting.  The first method is called @dfn{automated}
+mode and input is solely given on the command line.  This method is for users
+who simply want to recover all files (or just deleted files) from a partition
+and not be bothered by the details.  The second method is called
+@dfn{interactive} mode.  In interactive mode, a user interacts with Fatback
+through a command interpreter which mimics the look and feel of a traditional
+UNIX shell.  Interactive mode is recommended for users that want to do more
+advanced undeleting.
+
+There is no difference in the undelete technique of the two different modes.
+When a user runs Fatback in automated mode, it is actually running predefined
+or @dfn{canned} commands through the fatback interpreter.
+
+The only limitation of the automated mode (as of version
+@value{fatback-version}) is that it will only process a single partition.
+
+To run Fatback, type the program name (@command{fatback}),  then type any
+options you wish to pass to Fatback.  The last argument on the command line
+should be the name of the input file.  Here is the command syntax:
+@example
+fatback @var{options} @var{input-file}
+@end example
+The options can either be a letter or a word and may or may not require any
+arguments.  For example, to specify a file to place the audit log into, you
+may can use the @option{-l} flag or the @option{--log} flag.  These options
+require an argument.  To specify the required argument with the @option{-l}
+option, use @option{-l @var{file}}.  To specify the argument with the
+@option{--log} option, use @option{--log=@var{file}}.
+
+The input file can be either a device (a file in the @file{/dev} directory) or
+an image of a drive or partition.
+
+@menu
+* Audit Logs::
+* Command Line Options::
+* The Fatback Interpreter::
+* Run-time Variables::
+@end menu
+
+@node Audit Logs, Command Line Options, Using Fatback, Using Fatback
+@comment  node-name,  next,  previous,  up
+@section Audit Logs
+@cindex Audit logs
+Fatback uses audit logs to keep a record of operations performed in a session.
+The data it logs includes the commands the user types, the command line used
+to execute the program, the users environment, information about the partition
+being analyzed, and information about each file that was recovered.
+
+By default, the audit log will be written to a file called
+@file{fatback.log} in the current directory.   To store the audit log to
+a different location, use the @option{-l @var{file}} or
+@option{--log=@var{file}} switch.
+
+                                                                                                                                                                                                                                                                                                            @node Command Line Options, The Fatback Interpreter, Audit Logs, Using Fatback
+@comment  node-name,  next,  previous,  up
+@section Command Line Options
+@cindex Command line options
+
+Fatback version @value{fatback-version} provides the following command line
+options:
+
+@table @option
+@item -a
+@itemx --auto
+Run Fatback in automatic undelete mode.  This mode will attempt to recover all
+deleted files in a given partition, and only that partition.  If the input data
+is a partitioned drive, use the @option{-p @var{number}} or @option{
+--partition=@var{number}} option to specify which partition to use.
+
+@item -o @var{directory}
+@itemx --output=@var{directory}
+@cindex output
+Place recovered files into the directory specified.  If Fatback is run in
+automatic undelete mode, or if a recursive copy is performed, sub directories
+will be created underneath the output directory that correspond to directories
+in the partition that Fatback is working with.
+
+@item -l @var{log-file}
+@itemx --log=@var{log-file}
+@cindex log
+@cindex Audit logs
+Place the audit log into the specified file.
+
+@item -v
+@itemx --verbose
+Display extra information to the screen. 
+
+@item -p @var{partition-number}
+@itemx --partition=@var{partition-number}
+Process a specific partition of a partitioned drive.  This is necessary to use
+auto mode with a partitioned drive.  In interactive mode, the partition menu
+will be bypassed.
+
+@item -d
+@item --delprefix=@var{prefix}
+@cindex prefix
+@cindex delprefix
+Use @var{prefix} as the beginning of the name of deleted files.  The
+default value is '?'.
+
+@item -s
+@itemx --single
+Treat input as a single partition without checking for partitions.
+
+@item -z @var{sector-size}
+@itemx --sectsize=@var{sector-size}
+Use @var{sector-size} as the sector size of the input data instead of the
+default value of 512.
+
+@item -h
+@itemx --help
+@cindex help
+Display a help screen and terminate
+
+@item -V
+@itemx --version
+@cindex version
+Display the Fatback version number and terminate.
+
+@end table
+
+@node The Fatback Interpreter, Run-time Variables, Command Line Options, Using Fatback
+@comment  node-name,  next,  previous,  up
+@section The Fatback Interpreter
+@cindex Fatback interpreter
+If Fatback is run without the @option{-a} or @option{--auto} option, it enters
+what is called @dfn{interactive} mode.  In interactive mode,  Fatback gives
+you a prompt to which you can enter commands and direct Fatback to perform
+more specific tasks than the automatic undelete mode.
+
+If the input is a partitioned drive, Fatback will first display a menu of
+possible partitions and prompt you for which you would like to work with.
+Fatback will then enter the partition and you may begin exploring and
+recovering files!
+
+The command interpreter is loosely modeled after the classic UNIX shell
+environment.  The interpreter provides a prompt (@samp{fatback>} by default),
+and mimics several UNIX shell commands such as @samp{ls}, @samp{cd}, @samp{pwd}
+, @samp{cp}, and many others.
+
+Fatback version @value{fatback-version} has the following commands:
+
+@table @command
+@item cd
+Change to a specified directory
+
+@item copy
+@itemx cp
+Copy files out to an external file system
+
+@item help
+@pindex help
+Display a list of commands and a brief description of each
+
+@item dir
+@itemx ls
+List entries in a directory
+
+@item pwd
+@pindex pwd
+Print the name of the current directory
+
+@item stat
+Display detailed information about a directory entry
+
+@item chain
+Display the cluster chain for a directory entry
+
+@item cpchain
+Copy a cluster chain out to a file
+
+@item lostchains
+@pindex lostchains
+Display a list of lost cluster chains in the current partition
+
+@item sh
+Execute a command in the outside environment
+
+@item set
+Set run-time variables within Fatback
+
+@item done
+Stop working with the current partition, or exit fatback if in single partition
+mode.
+
+@item quit
+Exit Fatback
+
+@end table
+
+@pindex copy
+@pindex dir
+The @command{copy} command is synonymous with @command{cp}, and the
+@command{dir} command is synonymous with @command{ls}.  The @command{copy} and
+@command{dir} aliases where created to give users who primarily use DOS a
+familiar interface.  However, the Fatback interpreter was designed to mimic a
+UNIX shell, so the @command{cp} and @command{ls} forms are preferred and used
+by all the documentation.
+
+@cindex Case sensitivity
+It is important to note that Fatback is very case sensitive.  All directory
+entries are in upper case, and some may have a long file name (@pxref{Long File
+Names}) associated with it that can be mixed case.  When specifying directory
+entries you must use either the exact uppercase name, or the long file name.
+To specify a long file name that contains white space, put the whole name in
+double quotes.  For example, the @file{Program Files} directory in a
+windows system can be specified by either @samp{PROGRA~1} or
+@samp{"Program Files"}.
+@menu
+* The cd Command::
+* The cp Command::
+* The ls Command::
+* The stat Command::
+* The chain Command::
+* The cpchain Command::
+* The sh Command::
+* The set Command::
+* The done Command::
+* The quit Command::
+@end menu
+
+@node The cd Command, The cp Command, The Fatback Interpreter, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{cd} Command
+@pindex cd
+The @command{cd} command has the following syntax:
+@example
+cd @var{directory}
+@end example
+This will set the current directory to @var{directory}.  @var{directory} may
+be any number of layers deeper than the current directory.  For example, to
+change to the @file{system} directory underneath the @file{windows} directory
+from the root directory, you would run the following command:
+@example
+cd /windows/system
+@end example
+
+The directory names @file{.} and @file{..} are reserved for relative path
+specification purposes.  The @file{.} is a directory entry that represents its
+parent directory.  For example, specifying @file{MYDIR/.} is the same as
+specifying @file{MYDIR} because the @file{.} specifies its parent, which is
+@file{MYDIR}.  Similarly, the @file{..} entry specifies the parent directory
+of the parent directory of itself.  An example of this would be
+@file{MYDIR/SUBDIR/..}, which would of course be the same as @file{MYDIR}.
+
+@node The cp Command, The ls Command, The cd Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{cp} Command
+@pindex cp
+The @command{cp} command is used to copy files from the fatback environment out
+to the host file system.  It has the following syntax:
+@example
+cp @var{options} @var{files} @var{to-directory}
+@end example
+@var{files} can be specified as any number of file names, or patterns.
+Patterns are used to specify many files at once by using special sequences of
+characters.  The most commonly used patters are @samp{*}, @samp{?}, and
+@samp{[]}.  The @samp{*} character is used to specify zero or more characters
+of any kind, @samp{?} specifies one character of any kind, and @samp{[]}
+specifies a single character of a specific set.
+
+@subsubheading Patterns
+@cindex Patterns
+When used by its self, the @samp{*} character will match all files in a
+directory.  For example the following command would copy all the files in the
+current directory to the @file{/mnt/data} directory in the hosts file system:
+@example
+cp * /mnt/data
+@end example
+The @samp{*} character can also be used in conjunction with other.  For
+example, the following command will copy all files that end in @samp{.exe} to
+the @file{/mnt/data} directory:
+@example
+cp *.exe /mnt/data
+@end example
+
+Here is an example of using the @samp{?} character to copy all the files in
+the @file{SETUP} directory that have a single character for an extension to
+the @file{/mnt/data} directory:
+@example
+cp SETUP/*.? /mnt/data
+@end example
+
+The @samp{[]} pattern is a bit more complex than the previous examples.
+Between the left and right bracket is where a specific set of matching
+characters is specified.  For example, the pattern @samp{[abc]} would match
+the letter @samp{a}, @samp{b}, or @samp{c}.  Ranges or characters can also be
+specified using the @samp{-} character in between two other characters.  Using
+this syntax, all the letters in the alphabet can be specified using the pattern
+@samp{[a-z]}.
+
+Patterns can be combined for even greater power.  If you copy all the files
+in the current directory that begin with a number and end with the extension
+@samp{.dat} to the @file{/mnt/data} directory, the following command could be
+used:
+@example
+cp [0-9]*.dat /mnt/data
+@end example
+For more information on the syntax of the patterns, consult your systems
+man pages under globs(7).
+
+@subsubheading @command{cp} command options
+The @command{cp} command accepts two options, @samp{-d} and @samp{-R}.  The
+@samp{-d} option tells @command{cp} to only copy files that are deleted, and
+skip over active file entries.  The @samp{-R} option makes the command
+recurse down any sub directories it finds.  To undelete all the files in a
+partition to the @file{/mnt/data} directory, use the following command:
+@example
+cp -d -R /* /mnt/data
+@end example
+
+@node The ls Command, The stat Command, The cp Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{ls} Command
+@pindex ls
+The @command{ls} is used to display entries in a directory.  The syntax for
+@command{ls} is as follows:
+@example
+ls @var{directory}
+@end example
+
+The entries in the specified @var{directory} are displayed.  If no
+@var{directory} is specified, entries in the current directory are displayed.
+Multiple directories can also be displayed at the same time by specifying more
+than one directory, or by using a pattern.
+
+@node The stat Command, The chain Command, The ls Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{stat} Command
+@pindex stat
+The @command{stat} command displays detailed information about a directory
+entry.  This information includes all information displayed with @command{ls},
+plus additional information such as the cluster chain, and creation date. The
+@command{stat} command has the following syntax:
+@example
+stat @var{files}
+@end example
+
+@node The chain Command, The cpchain Command, The stat Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{chain} Command
+@pindex chain
+The @command{chain} command displays the cluster chain of a given directory
+entry or entries.  The syntax for the @command{chain} is:
+@example
+chain @var{files}
+@end example
+The output of running the @command{chain} command will be a series of numbers.
+Each number represents a cluster in the FAT table (@pxref{FAT Tables}) that
+the entry occupies.
+
+@node The cpchain Command, The sh Command, The chain Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{cpchain} Command
+@pindex cpchain
+The @command{cpchain} command writes the data in a cluster chain out to a file.
+It's syntax is as follows:
+@example
+cpchain @var{chain} @var{to-file}
+@end example
+@var{chain} is a number value of the starting cluster of the cluster chain to
+be written out.  @var{to-file} is where fatback will store the data in the host
+file system.
+
+@node The sh Command, The set Command, The cpchain Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{sh} Command
+@pindex sh
+The @command{sh} command executes a command in the outside environment.  It's
+syntax is simply the command @command{sh} followed by any commands that you
+would normally execute at a shell prompt.  This can be convenient if, for
+example, you accidentally ran Fatback before you mounted the file system where
+you intended to place to files you are going to undelete to.  In this case,
+you could execute the mount command within a @command{sh} command like this:
+@example
+sh mount /dev/ad0s1 /mnt/extra-hd
+@end example
+On a more advanced note, the @command{sh} is implemented with improved signal
+handling which is not present in the standard UNIX @code{system()} function.
+This makes it possible to run even dangerous processes without the risk of
+crashing the parent process (fatback in this case).  In other words, fear not
+the @command{sh} command, for it will only bring good fortune to thee.
+
+@node The set Command, The done Command, The sh Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{set} Command
+@pindex set
+The @command{set} command is used to set run-time variables as well as modify
+the current FAT table.  To set run-time variables, use the following syntax:
+@example
+set @var{varname}=@var{value}
+@end example
+
+For more information on run-time variables, @xref{Run-time Variables}.
+
+The FAT table can be modified by using the following syntax:
+@example
+set @var{cluster-number}=@var{value}
+@end example
+
+@var{cluster-number} represents an entry in the FAT table and @var{value} is the
+cluster that that entry points to.  When a FAT table entry is modified with
+@command{set}, the changes are not purely temporary and memory resident only.
+
+If the command @command{set} is run with no arguments, then it will display
+a list of the run-time variables and their associated values.
+
+@node The done Command, The quit Command, The set Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{done} Command
+@pindex done
+If the input to Fatback is a partitioned drive, then executing the
+@command{done} command will cause Fatback to finish editing the current
+partition and return to the partition menu.  Otherwise, if the input is a
+single partition, executing the @command{done} command will cause Fatback to
+terminate.
+
+@node The quit Command,  , The done Command, The Fatback Interpreter
+@comment  node-name,  next,  previous,  up
+@subsection The @command{quit} Command
+@pindex quit
+Unlike the @command{done} command, executing the @command{quit} will cause
+Fatback to terminate regardless of whether the input is only a partition or
+multiple partitions.
+
+@node Run-time Variables,  , The Fatback Interpreter, Using Fatback
+@comment  node-name,  next,  previous,  up
+@section Run-time Variables
+@cindex Run-time variables
+Fatback provides run-time variables as a way of dynamically configuring the
+behavior of its execution during run-time.  Variables are set and viewed with
+the @command{set} command (@pxref{The set Command}).
+
+Here is a list of the run-time variables in Fatback version
+@value{fatback-version}:
+
+@table @code
+@item verbose
+@vindex verbose
+The variable that determines whether or not to display extra information
+to the screen.  
+
+@item sectsize
+@vindex sectsize
+The sector size for fatback to use when making calculations.  This defaults
+to 512, but if an input drive uses a different size and Fatback does not
+detect it properly, then set this by hand.  This variable can also be set via
+the command line using the @option{-z} or @option{--sectsize} option.
+
+@item prompt
+@vindex prompt
+The string that Fatback uses to prompt the user.  This is set by default to
+@samp{fatback>}.  This probably will be of little interest to most end users,
+however it is important to note for someone who, for example, plans to write
+custom automation scripts using Expect@footnote{Expect is a program for
+automating interactive programs.  For more information visit
+@url{http://expect.nist.gov/}.}.
+
+@item showall
+@vindex showall
+The variable that determines whether or not to display non-deleted files
+when the @command{ls} command is executed.  This variable can be set to either
+@samp{on} or @samp{off}.  If it set to @samp{on} then all files will be
+displayed with the @command{ls} command.  Otherwise, if it is set to @samp{off}
+then only deleted files will be displayed.
+
+@item deleted_prefix
+@vindex deleted_prefix
+@cindex delprefix
+The string that Fatback uses as the first part of the name of deleted
+files.  The default value is '?'.
+@end table
+
+@node Concept Index, Command and Variable Index, Using Fatback, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Concept Index
+
+@printindex cp
+
+@node Command and Variable Index,  , Concept Index, Top
+@comment  node-name,  next,  previous,  up
+@unnumbered Command and Variable Index
+
+@printindex pg
+
+@bye

@@ -1,0 +1,168 @@
+// FOR LAW ENFORCEMENT USE ONLY
+// Pseudo Code for fatback
+// By SrA Nicholas Harbour
+// 
+// the "//" denotes a comment, and a "\" denotes a statement is 
+// continued on the following line
+
+//---Program begins here-------
+Start out by assuming that the input stream is raw disk
+If SanityCheck_MBR() turns out ok:
+	call Undelete_partition() for each partition
+If the sanity check failed:
+	assume its a partition and call Undelete_partition()
+		//assuming that routine
+		//will check the integrity of
+		//the VBR 	
+//--------------------------------------------------
+
+Undelete_partition():
+	Call SanityCheck_VBR() to make sure this is valid partition
+	If the input stream was a raw disk:
+		Assume FS ID is as reported in the MBR
+		Call Determine_FSID() to verify the partition type
+			//this call is used for auditing purposes
+			//the FS ID byte in the MBR will be the 
+			//determining factor	
+	Else:
+		Call Determine_FSID() to find out which FS type it is
+		//Since no MBR is present, this call will attempt to
+		//guess which FS is present.
+	
+	Store the FAT into memory
+	Create a Bitmap of clusters in memory
+	
+	//PHASE 1
+	Walk the logical directory structure
+		if it is a directory:
+			store its information in the list of directories
+		if it is part of a long file name:
+			convert wide character string to single byte characters
+			store string with seqence number and reference to dir in\
+			the list of lfn fragments
+		if a file is active:
+			if the filesize is too small for the number\
+			of clusters occupied:
+				add the erronious clusters to the lost\
+				cluster chain list.
+				flag the proper clusters in the bitmap
+			else:
+				flag its clusters in the bitmap
+		else if a file is deleted:
+			add its information to the list of deleted files
+				
+	//PHASE 2
+	Scan through all remaining free clusters
+		Determine if the cluster is a directory by calling dir_check()
+		if it was a directory:
+			Goto the Recover_directory() section
+	Scan through all FAT entries
+		if the cluster pointed to by the FAT entry is not active:
+			recover_lost_chain()
+
+	//PHASE 3
+	Corrilate long filenames to files and dir's
+	Using the list of deleted files created in the previous step,
+		determine if there are multiple entries pointing to\
+		the same cluster chain,
+		if duplicate chain references:
+			determine which is newer and add it\
+			to the tree of files to recover 
+		if unique:
+			add it to the tree of files to recover
+	Using the list of deleted directories,
+		If a deleted file reports the same clusters as a deleted dir,
+			discard the directory and leave the file
+		If a directory has a deleted directory as an entry,
+			attempt to find that directory in the list and\
+			add it as a branch off of this directory
+	
+	//PHASE 4
+	Using the tree of deleted directories prepared in phase 3,
+		parse through each directory and call recover() on any\
+		file as well as create each directory if it contains deleted\
+		files.
+	Using the remaining list of directories that could not be fitted\
+	into the logical tree,
+		if the dir contains any deleted files create the directory\
+		off of the "unknown" subdir
+		call recover() on any deleted files 			
+//-------------------------------------------------------------------		
+
+Recover_directory():
+	Determine if cluster chain is a valid directory
+	if it is valid:
+		add its info to the list of deleted directories
+		then for each entry in the directory:
+			Call SanityCheck_dir_entry()
+			if it is a directory:
+				call Recover_directory() on it
+			if it is a file:
+				store its info in the list of deleted files
+//--------------------------------------------------
+
+
+SanityCheck_MBR():
+	Check to make sure that:
+		the first byte of each partition entry is either x80 or 0
+		the filesystem ID is an acceptable one
+		the partition boundries dont overlap
+		ends with 0x55AA
+//----------------------------------------------------
+
+
+SanityCheck_VBR():
+	Check to make sure that:
+		all 8 bytes of the OEM name are ascii characters
+		sectors per cluster is a power of 2
+		FAT copes nonzero  //maybe <= 2?
+		Media descriptor byte is legal //maybe just nonzero?
+		The number of reserved sectors is > 0 //or explicitly 1
+		Volume serial number is non-null
+		Volume label is ASCII readable
+		(total sectors if > 32mb) field  and (total sectors if <=32mb)\
+			 field are mutually exclusive
+		ends with 0x55AA
+//---------------------------------------------------
+		
+
+recover():
+	Starting with the first cluster in the cluster chain:
+		if the cluster is free in the cluster bitmap:
+			extract that cluster
+			continue loop using the next cluster in the chain
+		else:
+			quit the loop
+//------------------------------------------------
+
+dir_check():
+	Check to make sure that:
+		it begins with a "." followed by 10 spaces
+		the next entry is a ".." followed by 9 spaces
+		//Note: this method wont detect a deleted root dir
+		//on the odd occasion of that occuring manual
+		//recovery would be needed.  might be a nifty 
+		//feature to add to a later version, but not 
+		//necessary yet.
+		
+//----------------------------------------------
+Determine_FSID():
+	If the partition is < 16mb then it is FAT12
+	If it is > 16mb and < 512mb then it is FAT16
+	If it is > 2gb then it is FAT32
+	If it is > 512mb and < 2gb:
+		compare the size of the FAT with the number of clusters
+		the size of each FAT entry
+	
+//---------------------------------------------
+SanityCheck_dir_entry():
+	Check to make sure that:
+		All 11 bytes of the filename are legal
+		The first 8 bytes of the filename contain at\
+		least one non whitespace character.
+		If the attribs are RSHV and the cluster number is 0
+		(even if filename is illegal)
+			then assume it is part of a Long file name
+		Starting cluster number is within valid range of FAT type
+		the attributes are valid
+		size is withing range of partition and FS limits

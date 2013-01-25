@@ -1,0 +1,885 @@
+2001-05-30  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/output.c, /home/cvs/fatback/output.h, /home/cvs/fatback/recovery.c, /home/cvs/fatback/recovery.h, /home/cvs/fatback/vbr.c, /home/cvs/fatback/vbr.h, /home/cvs/fatback/cmd_set.c, /home/cvs/fatback/cmd_stat.c, /home/cvs/fatback/dirtree.c, /home/cvs/fatback/fat.c, /home/cvs/fatback/interface.c, /home/cvs/fatback/interface_data.c, /home/cvs/fatback/mbr.c, /home/cvs/fatback/cmd_misc.c:
+	Fixed minor bugs.
+	Added display() support instead of printf/audit()
+
+	* /home/cvs/fatback/vars.c:
+	Deleted "loglevel" variable and added "verbose".
+
+	* /home/cvs/fatback/fatback.c:
+	Added print_shortver() with the -V --version switch.
+	Added ticmarks.
+	Fixed bugs in the main logic.
+
+	* /home/cvs/fatback/cmd_ls.c, /home/cvs/fatback/cmd_lostchains.c:
+	*** empty log message ***
+
+	* /home/cvs/fatback/cmd_cpchain.c:
+	Added display() and '~' home dir shortcut.
+
+	* /home/cvs/fatback/cmd_cp.c: Added display() support.
+	Added '~' home dir shortcut.
+
+	* /home/cvs/fatback/cmd_chain.c: Added display() interface.
+
+	* /home/cvs/fatback/audit.h, /home/cvs/fatback/audit.c:
+	Combined audit functionality into output module.
+
+	* /home/cvs/fatback/Makefile.am: Removed libreadline and libncurses
+
+	* /home/cvs/fatback/configure.in: update version number
+
+	* /home/cvs/fatback/fatback-manual.texi: updated version numbers.
+
+	* /home/cvs/fatback/fatback-manual.texi: Updated to version 1.3
+
+2001-05-04  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/recovery.h: moved from output.h
+
+	* /home/cvs/fatback/recovery.c:
+	Moved from output.c.  output.c is going to handle functions for dealing with audit logging and user output.
+
+2001-04-30  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/autogen.sh: Moved from run-autotools.sh
+
+	* /home/cvs/fatback/run-autotools.sh: moved to autogen.sh
+
+	* /home/cvs/fatback/configure.in: *** empty log message ***
+
+	* /home/cvs/fatback/vars.c: Added deleted_prefix variable
+
+	* /home/cvs/fatback/fatback.c:
+	Added support for user-configurable deleted file prefix's
+
+	* /home/cvs/fatback/dirtree.c:
+	Added support for a user-configurable deleted file prefix.
+
+	* /home/cvs/fatback/setl.l: added "_" to legal word character
+
+2001-04-24  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/cmd_ls.c: Added date field printing
+
+	* /home/cvs/fatback/dirtree.c:
+	Added more sanity checking for bogus directory data
+
+	* /home/cvs/fatback/output.c:
+	Moved log messages to a slightly more readable format, and fixed some minor io issues.
+
+2001-02-22  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fatback-design.tex: Initial entry.
+
+2001-02-20  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/audit.c:
+	Added conditional compilation for things in the log_env function.
+
+	* /home/cvs/fatback/configure.in: Upgraded to .4
+
+	* /home/cvs/fatback/fatback-manual.texi:
+	Updated version numbers to current.
+
+	* /home/cvs/fatback/interface.c:
+	Changed command line string manipulation to a more flexible hook-based system.
+
+2001-02-15  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.c:
+	Changed the way signature bytes are read to support input from block devices.
+
+	* /home/cvs/fatback/sig.h:
+	Changed prototype of read_sig() to conform to accept a buffer instead of an offset.
+
+	* /home/cvs/fatback/sig.c:
+	read_sig() now takes a pre-read buffer instead of an offset to read.
+
+	* /home/cvs/fatback/output.c:
+	Changed the way extract_file() works to reading entire clusters even on the last cluster to avoid problems with reading from block devices.
+
+	* /home/cvs/fatback/mbr.c:
+	Fixed the way the program reads signatures to fix the problem of reading from block device input.
+
+	* /home/cvs/fatback/Makefile.am: Added -g flag to CFLAGS
+
+	* /home/cvs/fatback/configure.in: Changed to version 0.3.3
+
+2001-02-10  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/configure.in: Version 0.3
+
+	* /home/cvs/fatback/Makefile.am: Added CFLAGS for lfs support.
+
+	* /home/cvs/fatback/configure.in:
+	All new, initially generated with autoscan.
+
+	* /home/cvs/fatback/cmd_cp.c:
+	Impoved functionality by better handeling directory creation.
+
+	* /home/cvs/fatback/fat.c: minor bug fixes.
+
+	* /home/cvs/fatback/fatback.c:
+	Changed default input type to DFILE instead of RFILE
+
+	* /home/cvs/fatback/input.c:
+	Added DFILE input type and all its associated functions.
+
+	* /home/cvs/fatback/input.h: Added DFILE input type
+
+	* /home/cvs/fatback/output.c:
+	Fixed more perror() type bugs.  Added more audit logging.
+
+	* /home/cvs/fatback/output.h: Added unused_fname() to public funcitons
+
+	* /home/cvs/fatback/cmd_cp.c:
+	Fixed bug in recursive copying of non-deleted files.
+
+	* /home/cvs/fatback/dirtree.c:
+	Added an additional check before recursing down directories
+
+2001-02-09  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/interface_data.c:
+	Changed "deleted file(s)" to just "file(s)" in description of cp command.
+
+2001-02-08  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/Makefile.am: Added man page to EXTRA_DIST
+
+	* /home/cvs/fatback/fatback.1: Initial entry
+
+	* /home/cvs/fatback/Makefile.am: Added man page support
+
+	* /home/cvs/fatback/configure.in: updated for v0.2
+
+	* /home/cvs/fatback/vbr.h:
+	Added unsigned long fat_entries to the vbr structure.
+
+	* /home/cvs/fatback/output.h: Changed prototype for extract_file()
+
+	* /home/cvs/fatback/output.c:
+	Added the capability to extract multiple files of the same name by adding the unused_fname() function.
+	Changed extract_file() to take more arguments for sanity checking.
+
+	* /home/cvs/fatback/mbr.c:
+	Removed MBR_BLANK from the list of acceptable partition types in the sanity check functions.  This is an important bug fix.
+
+	* /home/cvs/fatback/lfn.c:
+	Reinstated a check in the cat_lfn_list() function that fixes a lot of problems.  This is an important bug fix.
+
+	* /home/cvs/fatback/fatback.c:
+	Added -v, --version option so that help2man will work.
+
+	* /home/cvs/fatback/fat.h:
+	reverted type of clust_t->owner back to void.
+
+	* /home/cvs/fatback/cmd_cpchain.c:
+	Changed call to extract_file() to support new arguments.
+
+	* /home/cvs/fatback/cmd_cp.c:
+	Added code to check the length of the name against NAME_MAX in limits.h
+
+2001-02-07  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fat.h: Changed cust_t.owner's type to dirent_t
+
+2001-02-06  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fatback-manual.texi:
+	Fixed minor grammatical errors.  Removed the abandoned xref in the Acknowlegements section.
+
+	* /home/cvs/fatback/fat.c: Added check in chain_length(
+
+	* /home/cvs/fatback/configure.in: *** empty log message ***
+
+	* /home/cvs/fatback/fatback.c:
+	Added gen_opts() and str_cons() to dynamically build an options string for getop_long to use.
+
+	* /home/cvs/fatback/lfn.c:
+	Fixed unicat() so that it will properly concatenate a unicode name with exactly 13 characters.
+
+	* /home/cvs/fatback/input.c:
+	Changed perror messages to include the function name.
+
+2001-02-05  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/README:
+	Added explaination of how to build documentation (kind of important)
+
+	* /home/cvs/fatback/fatback-manual.texi: first complete checkin.
+
+	* /home/cvs/fatback/Makefile.am, /home/cvs/fatback/cmd_ls.c, /home/cvs/fatback/texinfo.tex:
+	initial entry
+
+	* /home/cvs/fatback/fatback-manual.texi, /home/cvs/fatback/pseudo_code, /home/cvs/fatback/situations:
+	Moved from doc/
+
+	* /home/cvs/fatback/Makefile.am:
+	fixed spelling error in pseudo_code (added the trailing e)
+
+	* /home/cvs/fatback/Makefile.am:
+	Added pseudo_code and situations documents to EXTRA_DIST
+
+	* /home/cvs/fatback/pseudo_code, /home/cvs/fatback/situations:
+	Moved to the doc/ directory
+
+	* /home/cvs/fatback/run-autotools.sh, /home/cvs/fatback/COPYING:
+	Initial entry.
+
+	* /home/cvs/fatback/configure.in: Initial entry
+
+	* /home/cvs/fatback/Makefile.am:
+	Initial entry.  This replaces the old Makefile
+
+	* /home/cvs/fatback/AUTHORS, /home/cvs/fatback/INSTALL, /home/cvs/fatback/NEWS, /home/cvs/fatback/README:
+	Initial entry
+
+	* /home/cvs/fatback/getopt.c, /home/cvs/fatback/getopt.h, /home/cvs/fatback/getopt1.c:
+	initial entry.  getopt_long function from glibc.
+
+	* /home/cvs/fatback/fatback.c:
+	Added conditional support for version number
+	Added -m, --mmap option for mmaped file io.
+
+	* /home/cvs/fatback/input.c:
+	Added ifdef's for mmap() related code.  it can now be dynamically activated
+	via configure.
+
+	* /home/cvs/fatback/input.h: Added ifdef's for the mmap related code.
+
+	* /home/cvs/fatback/setl.l:
+	Changed include from y.tab.h to sety.h to conform easily with autoconf/automake
+
+	* /home/cvs/fatback/fatback-manual.texi: Moved to the doc/ directory
+
+	* /home/cvs/fatback/Makefile:
+	Switched to autoconf and automake, this is now obsolete
+
+2001-02-02  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/interface.c:
+	Fixed find_in_tree() to properly handle things like subdir/../subdir.
+	Fixed memory leaks in find_in_tree()
+
+	* /home/cvs/fatback/Makefile:
+	Improved document rules to use GNU make's implicit rules for texi2dvi and makeinfo
+
+	* /home/cvs/fatback/fatback.c: fixed typo in the help screen.
+
+	* /home/cvs/fatback/fatback.c:
+	Improved the help screen to make minimal printf calls.
+
+	* /home/cvs/fatback/modules.conf:
+	Removed this file, its functionality has been rolled into the Makefile
+
+	* /home/cvs/fatback/vbr.c:
+	Fixed the log_vbr() function to use get_fs_type() instead of just printing the fsid field which could potentially contain binary data.
+
+	* /home/cvs/fatback/setl.l: *** empty log message ***
+
+2001-01-31  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/output.c: Added audit more audit logging
+	fixed bug with with extraction routine
+
+	* /home/cvs/fatback/lfn.c:
+	Impoved functionality to recover deleted lfn's
+
+	* /home/cvs/fatback/interface.c: Added audit logging of user commands
+
+	* /home/cvs/fatback/audit.c:
+	Added "*" to the beginning of log_env lines.
+
+	* /home/cvs/fatback/fatback.c:
+	Changed --level's - equivelent from 'v' to '0'., and added --version and -v
+
+	* /home/cvs/fatback/dirtree.c:
+	fixed lfn support! now gets lfns for deleted entries.
+
+	* /home/cvs/fatback/cmd_misc.c:
+	Fixed printing problem with the help command
+
+	* /home/cvs/fatback/cmd_cp.c: *** empty log message ***
+
+2001-01-26  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/Makefile:
+	Added author rule. Made debug rule actually use Debug variable.
+
+	* /home/cvs/fatback/Makefile:
+	Improved to handel objects directly.  Thus makeing modules.conf obsolete.
+
+	* /home/cvs/fatback/interface.c: Fixed find_files problems
+
+	* /home/cvs/fatback/getopt.h, /home/cvs/fatback/getopt.c: Moved to lib/
+
+	* /home/cvs/fatback/getopt1.c: moved to lib/
+
+	* /home/cvs/fatback/cmd_ls.c:
+	Changed behaviour to work just like the real ls command.
+
+2001-01-25  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/modules.conf:
+	added the lostchains command and the getopt functions from glibc.
+
+	* /home/cvs/fatback/dirtree.c:
+	Opps, the last checkin had a typo. please disregard version 1.7
+
+	* /home/cvs/fatback/fatback-manual.texi: Still incomplete.
+
+	* /home/cvs/fatback/Makefile: Added support for documentation.
+
+	* /home/cvs/fatback/audit.c:
+	Removed the * from the beginning of audit log entries.  I still don't know how
+	I want audit logs to look.
+	Added comments.
+
+	* /home/cvs/fatback/cmd_chain.c: Added comments.
+
+	* /home/cvs/fatback/cmd_cp.c:
+	Added comments, improved recursive behaviour.
+
+	* /home/cvs/fatback/cmd_cpchain.c: Added comments.
+
+	* /home/cvs/fatback/cmd_lostchains.c:
+	This is the initial entry of the lostchains command.  I have not fully tested
+	it, and I suspect that it doesnt work properly.
+
+	* /home/cvs/fatback/cmd_ls.c:
+	Impoved the look.  It now lines up columns and prints lfn's in a neat fashion.
+
+	* /home/cvs/fatback/cmd_misc.c:
+	Added comments.  impoved cmd_help() to auto adjust column offsets (still has
+	bugs!).
+
+	* /home/cvs/fatback/cmd_set.c:
+	Fixed bugs.  Added void types to yy function prototypes.
+
+	* /home/cvs/fatback/cmd_sh.c: Added comments.
+
+	* /home/cvs/fatback/cmd_stat.c:
+	Added support for find_files() so that stat will work on multiple files in a
+	single instance.
+	Added comments.
+
+	* /home/cvs/fatback/dirtree.c: Added comments.
+	Removed old unwanted code.
+
+	* /home/cvs/fatback/dirtree.h: Added more comments.
+
+	* /home/cvs/fatback/fatback.c: Added comments.  Fixed fbvar bugs.
+
+	* /home/cvs/fatback/fat.h: Added more comments.
+
+	* /home/cvs/fatback/getopt1.c, /home/cvs/fatback/getopt.c, /home/cvs/fatback/getopt.h:
+	This is borrowed from glibc.
+
+	* /home/cvs/fatback/input.c:
+	Fixed some errno problems.  Added function descriptions and structure
+	descriptions
+
+	* /home/cvs/fatback/interface.c: Added lots of comments.
+	Fixed all the problems with fbvar's
+
+	* /home/cvs/fatback/interface_data.c: Added comments
+
+	* /home/cvs/fatback/interface.h: Fixed compiler warnings
+
+	* /home/cvs/fatback/mbr.c:
+	Finally worked te bugs out of the sectsize_var
+
+	* /home/cvs/fatback/mbr.h: Added include for <sys/types.h>
+
+	* /home/cvs/fatback/output.c:
+	Fixed some problems with errno.  It now clears errno before calling the
+	system call.  This way we dont get left over errno values being erroniously
+	checked
+
+	* /home/cvs/fatback/output.h: *** empty log message ***
+
+	* /home/cvs/fatback/util.c:
+	All functions that deal with system calls and errno will now clear errno before
+	calling their call.  Versions prior to this might get an error similar to:
+	CRITICAL ERROR: Success
+
+	* /home/cvs/fatback/util.h:
+	added include for <sys/types.h>.  needed to compile on FreeBSD
+
+	* /home/cvs/fatback/vars.c, /home/cvs/fatback/vars.h:
+	*** empty log message ***
+
+	* /home/cvs/fatback/vbr.c:
+	Added code to check and see if the FS_ID field contains non-ascii codes.  if
+	it does then it will assign a NULL to the fs_id field of the vbr struct.
+	Also added the sectsize variable to hold the value from sectsize_var->val.ival
+
+2001-01-19  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fatback-manual.texi:
+	Added lots of text, all the way up through FAT tables
+
+2001-01-17  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fatback-manual.texi:
+	Initial entry, I havent even tested it
+
+	* /home/cvs/fatback/cmd_chain.c: no change
+
+	* /home/cvs/fatback/fatback.c:
+	all the command line options now actually work as advertised.
+
+2001-01-12  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/cmd_cp.c:
+	Recursive mode (-R) now works, as well as the -d flag (only deleted files).
+
+2001-01-10  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/ChangeLog:
+	Accedentally commited a changelog.  I shall be punished
+
+	* /home/cvs/fatback/ChangeLog, /home/cvs/fatback/modules.conf:
+	*** empty log message ***
+
+	* /home/cvs/fatback/Makefile: add functionality for lex and yacc stuff
+
+	* /home/cvs/fatback/audit.c: now uses the vars module for loglevel.
+
+	* /home/cvs/fatback/audit.h: I dont remember what I changed! sorry.
+
+	* /home/cvs/fatback/cmd_chain.c:
+	the chain command.  it will display a cluster chain.
+
+	* /home/cvs/fatback/cmd_cp.c:
+	the cp command! this is really the heart of how fatback undeletes stuff.  it works a lot like the regular unix cp command only you give it filenames that exist withing fatback, and tell it to copy to files that exist on your real system.
+
+	* /home/cvs/fatback/cmd_cpchain.c:
+	the cpchaind command. works like the cp commaind only you give it a cluster chain and it will write it out to a file.  this is how you can store directory information
+
+	* /home/cvs/fatback/cmd_ls.c: the ls command. nuff said.
+
+	* /home/cvs/fatback/cmd_misc.c:
+	this holds a lot of little commands stat are to insignificant to deserve there own file.
+
+	* /home/cvs/fatback/cmd_set.c: god: "Let there be light"
+	god: "Let there be the set command"
+
+	this is the catch-all of fatback.  the set command has its own mini-language that gives you the flexability to tweek with the programs runtime variables and such.
+	there are three parts to the set command, this file, the flex lexer (setl.l), and the yacc parser (sety.y).
+
+	* /home/cvs/fatback/cmd_sh.c:
+	the sh command.  this is essentially a version of system() that properly handles signals!!!!
+
+	* /home/cvs/fatback/cmd_stat.c: the stat command!
+
+	* /home/cvs/fatback/dirtree.c:
+	I have no Idea what I changed in this file.  at least I'm honest.
+
+	* /home/cvs/fatback/dirtree.h:
+	added entlist_t, which is used for linked lists of dirent_t *'s
+
+	* /home/cvs/fatback/fatback.c: Now uses vars module
+
+	* /home/cvs/fatback/fatback.h:
+	undel_partition() no longer takes a sector size variable
+
+	* /home/cvs/fatback/fat.c: fat12 now actually works.
+
+	* /home/cvs/fatback/fat.h: *** empty log message ***
+
+	* /home/cvs/fatback/interface.c: major rework.
+	took the command functions out and gave them there own seperate files,
+	changed the way arguments get passed to commands (it now works just like a shell!),
+	added some more handy functions, such as find_files()
+
+	* /home/cvs/fatback/interface_data.c:
+	initial entry.  this module holds global data that is used by the interface related portions of the program
+
+	* /home/cvs/fatback/interface_data.h: initial entry
+
+	* /home/cvs/fatback/interface.h:
+	major rework.  see interface.c for more info
+
+	* /home/cvs/fatback/mbr.c:
+	No longer passes sector size variables around like a moron, thank god for the vars module.
+
+	* /home/cvs/fatback/mbr.h:
+	map partitions no longer needs sector size to be passed in. (horray for vars module!)
+
+	* /home/cvs/fatback/output.c:
+	Initial entry.  this module handles output simantics of writing files.
+
+	* /home/cvs/fatback/output.h:
+	Initial entry of the output handeling module for fatback
+
+	* /home/cvs/fatback/setl.l:
+	This is the lex portion of the parser of the set command language for fatback
+
+	* /home/cvs/fatback/sety.y:
+	This is the initial entry of the set module.  this is the yacc portion of the parser for the language used by the set command.
+
+	* /home/cvs/fatback/util.c:
+	fixed a problem with the errno stuff.  before it would perror and exit because errno was still set from stuff that happned a long time ago.
+
+	* /home/cvs/fatback/util.h: *** empty log message ***
+
+	* /home/cvs/fatback/vars.c:
+	This is the initial entry of the vars module for fatback.  this module provides an excellent way of handeling global variables in a very safe mannor.  what it does is creat its own symbol table and provides functions for the rest of the program to access the variables by name.
+
+	* /home/cvs/fatback/vars.h: initial entry of vars module
+
+	* /home/cvs/fatback/vbr.c:
+	the vbr module now uses fatback vars module for globs and therefore nolonger needs to pass around sector size variables like an ideot
+
+	* /home/cvs/fatback/vbr.h:
+	vbr module now uses fatback vars module for globals such as sectorsize. hence it no longer needs to be passed around
+
+2000-12-11  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/lfn.h: added prototype for unichoke_tree
+
+	* /home/cvs/fatback/interface.h: added includes for dirtree and fat
+
+	* /home/cvs/fatback/interface.c:
+	added regex support, added split_line()
+
+	* /home/cvs/fatback/input.c:
+	read functions now return values similar to read() system call.
+
+	* /home/cvs/fatback/fatback.h: Changed undel_partition() to take flags
+
+	* /home/cvs/fatback/fatback.c: Fixed problem with single partition mode
+
+	* /home/cvs/fatback/fat.h: Added more cluster flags
+
+	* /home/cvs/fatback/dirtree.c: Minor fixes
+
+	* /home/cvs/fatback/Makefile: Added readline and ncurses libraries
+
+2000-12-04  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/modules.conf: added interface modules
+
+	* /home/cvs/fatback/mbr.c: minor fixes
+
+	* /home/cvs/fatback/lfn.c: lfn support completed!
+
+	* /home/cvs/fatback/fatback.c:
+	This version looks like a real program, with command line options and flexablility!
+
+	* /home/cvs/fatback/dirtree.c, /home/cvs/fatback/Makefile: Minor fixes
+
+	* /home/cvs/fatback/interface.h: Initial entry for interface module
+
+	* /home/cvs/fatback/interface.c:
+	Initial entry for interface module. working condition!
+
+2000-11-08  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/lfn.h, /home/cvs/fatback/lfn.c:
+	Initial entry of lfn module
+
+	* /home/cvs/fatback/vbr.h: bug fixes
+
+	* /home/cvs/fatback/vbr.c: Bug fixes
+
+	* /home/cvs/fatback/util.h: added efree()
+
+	* /home/cvs/fatback/util.c: Added efree()
+
+	* /home/cvs/fatback/modules.conf: added lfn module
+
+	* /home/cvs/fatback/input.c: Fixed bugs
+
+	* /home/cvs/fatback/fatback.c: Added lfn parsing calls
+
+	* /home/cvs/fatback/dirtree.h: Not much change
+
+	* /home/cvs/fatback/Makefile: Added debug and edit directives
+
+	* /home/cvs/fatback/dirtree.c: LFN module now works!
+
+2000-10-16  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.c: Minor fixes
+
+	* /home/cvs/fatback/fatback.c:
+	This is still a big hack.  right now it is contorted to only work with a single partition input.
+
+	* /home/cvs/fatback/fat.h, /home/cvs/fatback/fat.c: Minor fixes
+
+	* /home/cvs/fatback/dirtree.h: Still fixing bugs
+
+	* /home/cvs/fatback/dirtree.c: Fixing minor bugs still
+
+2000-09-26  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.h:
+	vbr_t now only has one field for sectors per fat. the field d.fat32.sects_per_fat32 has been removed
+
+	* /home/cvs/fatback/vbr.c:
+	removed sects_per_fat32 and fixed root directory location problems
+
+	* /home/cvs/fatback/fatback.c: This is still a test driver
+
+	* /home/cvs/fatback/fat.c: Now properly calculates cluster offsets
+
+	* /home/cvs/fatback/dirtree.c: First "Working" Version
+
+	* /home/cvs/fatback/Makefile: Now removes core files
+
+2000-09-22  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.h, /home/cvs/fatback/vbr.c, /home/cvs/fatback/util.h, /home/cvs/fatback/util.c, /home/cvs/fatback/mbr.c, /home/cvs/fatback/input.c:
+	*** empty log message ***
+
+	* /home/cvs/fatback/fatback.c:
+	Still non functional, but now uses undel_partition function to mimic the way it may really work in the future
+
+	* /home/cvs/fatback/fat.h, /home/cvs/fatback/fat.c:
+	*** empty log message ***
+
+	* /home/cvs/fatback/Makefile:
+	Now uses modules.conf to dynamicaly build program
+
+	* /home/cvs/fatback/dirtree.h: Initial Entry
+
+	* /home/cvs/fatback/dirtree.c:
+	Initial entry for directory and entry parsing module
+
+	* /home/cvs/fatback/modules.conf:
+	This file is used during the make process
+
+2000-08-28  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fat.h: Renamed fat12.h to fat.h
+
+	* /home/cvs/fatback/fat.c:
+	Renamed fat12.c to fat.c  the new goal is to house all fat activity in one module.
+
+	* /home/cvs/fatback/fat12.h: renamed to fat.h
+
+	* /home/cvs/fatback/fat12.c: renamed to fat.c
+
+	* /home/cvs/fatback/fat12.h: This is only the beginning
+
+	* /home/cvs/fatback/fat12.c: Initial entry.  This file is blank
+
+	* /home/cvs/fatback/util.h, /home/cvs/fatback/util.c:
+	Added endian handeling
+
+2000-08-25  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/mbr.c: Changed to use little_endian_x functions
+
+2000-08-24  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.h:
+	changed the vbr structure to support fat32 and fat1216 at the same time
+
+	* /home/cvs/fatback/vbr.c:
+	Now supports fat32 differences.  added audit logging stuff, added more comments
+
+	* /home/cvs/fatback/fatback.c:
+	Not much change, moved audit logging of VBR data to its own function in the VBR module
+
+2000-08-22  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/vbr.h: initial entry
+
+	* /home/cvs/fatback/vbr.c:
+	Initial entry, this module handles Volume Boot Records
+
+	* /home/cvs/fatback/fatback.h:
+	initial entry, contains global definitions for all modules
+
+	* /home/cvs/fatback/sig.h:
+	This module handels end of boot sector signatures
+
+	* /home/cvs/fatback/sig.c:
+	Initial entry, this module handles end of boot sector signatures (0xAA55)
+
+	* /home/cvs/fatback/mbr.h: Moved signature handeling to its own module
+
+	* /home/cvs/fatback/mbr.c: moved signature handeling to its own module
+
+	* /home/cvs/fatback/input.c: Not much change
+
+	* /home/cvs/fatback/fatback.c: it now attempts to read VBR's and stuff
+
+	* /home/cvs/fatback/Makefile: Added support for new modules
+
+2000-08-09  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/mbr.c, /home/cvs/fatback/input.h, /home/cvs/fatback/input.c, /home/cvs/fatback/audit.c, /home/cvs/fatback/audit.h:
+	*** empty log message ***
+
+	* /home/cvs/fatback/util.h: Opps, this one works.  sorry
+
+	* /home/cvs/fatback/util.h:
+	Reverted back to void * to avoid a nightmare of typecasting
+
+	* /home/cvs/fatback/util.c:
+	Went back to void * to avoid a nightmare of typecasting
+
+	* /home/cvs/fatback/util.h:
+	Now uses caddr_t instead of void *.  oh, and for future reference, caddr_t is defined in sys/types.h
+
+	* /home/cvs/fatback/util.c:
+	Just changed to used caddr_t for portability
+
+	* /home/cvs/fatback/mbr.h:
+	Portablility has arrived....  death to the bit-field structures
+
+	* /home/cvs/fatback/mbr.c:
+	MAJOR REVISION: Now it is portable!  i.e. no more bit-field structures.
+
+	* /home/cvs/fatback/input.h: Moved to enum type for input_t.
+
+	* /home/cvs/fatback/input.c:
+	MAJOR REVISION.  input handler are no longer switch statements.  Thay are now handled by a nifty operation arrays.  (an array of structures containing function pointers)
+
+	* /home/cvs/fatback/fatback.c: Still a test driver.
+
+	* /home/cvs/fatback/audit.c:
+	Not much change, Changed for new global variable name convention
+
+2000-08-07  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/fatback.c:
+	Still a test driver at this point, it displays the ranges of the partitions used on the drive now. illustrates the amazing new totally linear partition accessing scheme I have devised.  haha!
+
+	* /home/cvs/fatback/audit.c:
+	Major Change.  I feel pretty stupid.  Over the weekend, I discovered the amazing standard library function called vfprintf(), and subsequently, removed about 200 lines of code from this file.
+
+	* /home/cvs/fatback/mbr.h:
+	Added get_prange() interface. changed part_range_s elements to off_t's
+
+	* /home/cvs/fatback/mbr.c:
+	Major changes.  Removed Confusing Not-Logic, added get_prange() interface. Lots of minor fixes.  Changed part_range_s to use byte offsets instead of sector offsets, and likewise changed its definition to off_t.
+
+2000-08-04  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/input.c, /home/cvs/fatback/audit.h, /home/cvs/fatback/audit.c:
+	*** empty log message ***
+
+	* /home/cvs/fatback/util.c: Initial entry, just contains emalloc()
+
+	* /home/cvs/fatback/util.h: Initial entry
+
+	* /home/cvs/fatback/fatback.c: Now uses emalloc()
+
+	* /home/cvs/fatback/Makefile: Added util module
+
+	* /home/cvs/fatback/mbr.h: *** empty log message ***
+
+	* /home/cvs/fatback/mbr.c:
+	This version apears to work! beginning to lay down the interface get_prange()
+
+2000-08-03  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/mbr.h:
+	Added a #define's and renamed the extended_part (?) structure to ptable_list_s to better suit the structures new function as he master list data type for all partitions, not just extended.
+
+	* /home/cvs/fatback/mbr.c:
+	First real working copy.  much has changed in this version.  their are no longer two seperate data structures, the main partition table and the list of extended partition tables have been combined to make a single master list.  a lot of functions have been renamed as well.
+
+2000-08-02  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/Makefile: Added MBR module to compile list
+
+	* /home/cvs/fatback/mbr.h: First compilable version of MBR Module.
+
+	* /home/cvs/fatback/mbr.c:
+	This is the first compilable version of the MBR Module. not all interfaces are implemented yet.
+
+	* /home/cvs/fatback/input.h:
+	A few error corrections, it will compile now (that means it works! hehe, just kidding)
+
+	* /home/cvs/fatback/fatback.c:
+	Initial entry.  At this stage it is just a test driver for the various modules
+
+	* /home/cvs/fatback/mbr.c: Still testing cvs
+
+	* /home/cvs/fatback/audit.h, /home/cvs/fatback/audit.c, /home/cvs/fatback/input.h, /home/cvs/fatback/input.c:
+	Not much change
+
+2000-08-02  konge  <konge@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/mbr.c: Testing
+
+2000-08-02  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/mbr.c: Not much change
+
+	* /home/cvs/fatback/mbr.c, /home/cvs/fatback/mbr.h:
+	Still in EARLY DEVELOPMENT
+
+2000-08-01  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/Makefile: Initial Entry of Makefile
+
+2000-07-31  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/input.c:
+	Initial Import.  Still in EARLY DEVELOPMENT. not yet working
+
+	* /home/cvs/fatback/input.h:
+	Initial entry.  Still in EARLY DEVELOPMENT.  not yet working
+
+2000-07-28  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/audit.h, /home/cvs/fatback/audit.c:
+	STILL IN EARLY DEVELOPMENT
+
+2000-07-27  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/pseudo_code.2: Obsolete. Replaced by pseudo_code
+
+	* /home/cvs/fatback/pseudo_code.1: Obsolete.  replaced by pseudo_code
+
+	* /home/cvs/fatback/pseudo_code: Added long filename support
+
+2000-07-26  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/pseudo_code:
+	Undelete_partition() now relies on Determine_FSID() only in the event that the input is only a single partition.  Otherwise it asumes the Filesystem is as reported in the MBR
+
+	* /home/cvs/fatback/situations: Initial import
+
+	* /home/cvs/fatback/pseudo_code:
+	Added more checks to SanityCheck_dir_entry()
+	added checks for 0x55AA at end of MBR and VBR
+
+	* /home/cvs/fatback/pseudo_code:
+	No longer using the FSID String as a determining factor of FS validity
+	Added SanityCheck_dir_entry()
+
+2000-07-25  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/pseudo_code: Initial entry
+
+2000-07-24  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/pseudo_code.2:
+	Finished moving to new concept (4 phase)
+
+2000-07-21  Nicholas Harbour  <harbourn@cheesecake.dcfl.gov>
+
+	* /home/cvs/fatback/pseudo_code.2: Added dir_check() definition
+
+	* /home/cvs/fatback/pseudo_code.1: Added header information
+
+	* /home/cvs/fatback/pseudo_code.2: Added more detail, cleaned up some.
+	Added more comments and header information
+
+	* /home/cvs/fatback/pseudo_code.1, /home/cvs/fatback/pseudo_code.2:
+	Imported Sources
+
+	* /home/cvs/fatback/pseudo_code.1, /home/cvs/fatback/pseudo_code.2:
+	New file.
+

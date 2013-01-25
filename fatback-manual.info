@@ -1,0 +1,1127 @@
+This is fatback-manual.info, produced by makeinfo version 4.0 from
+fatback-manual.texi.
+
+INFO-DIR-SECTION Forensics
+START-INFO-DIR-ENTRY
+* Fatback: (fatback-manual).       A forensic tool for recovering files from FAT file systems.
+END-INFO-DIR-ENTRY
+
+   This file documents the user interface to fatback, the forensic tool
+for undeleting files from FAT file systems.
+
+   Copyright (C) 2000-2001 DoD Computer Forensics Lab This manual and
+the Fatback program are for *government and law enforcement use only*.
+
+
+File: fatback-manual.info,  Node: Top,  Next: Overview,  Prev: (dir),  Up: (dir)
+
+Fatback
+*******
+
+   Fatback is a tool for undeleting files from Microsoft FAT file
+systems.
+
+   This is the users manual edition 1.2 for Fatback v1.3
+
+* Menu:
+
+* Overview::
+* FAT File System Basics::
+* Using Fatback::
+* Concept Index::
+* Command and Variable Index::
+
+
+File: fatback-manual.info,  Node: Overview,  Next: FAT File System Basics,  Prev: Top,  Up: Top
+
+Overview
+********
+
+   Fatback is a forensic tool for undeleting files from Microsoft FAT
+file systems.  Fatback is different from other undelete tools in that
+it does the following:
+   * Runs under UNIX environments (only Linux and FreeBSD tested so far)
+
+   * Can undelete files automatically
+
+   * Supports Long File Names
+
+   * Supports FAT12, FAT16, and FAT32
+
+   * Powerful interactive mode
+
+   * Recursively undeletes deleted directories
+
+   * Recovers lost cluster chains
+
+   * Works with single partitions or whole disks
+
+   Fatback was developed by the U.S. Department of Defense Computer
+Forensics Laboratory (<http://www.dcfl.gov>) and is authorized for
+*government and law enforcement use only*.
+
+* Menu:
+
+* How to use this manual::
+* Acknowledgments::
+
+
+File: fatback-manual.info,  Node: How to use this manual,  Next: Acknowledgments,  Prev: Overview,  Up: Overview
+
+How to use this manual
+======================
+
+   This manual has two parts.  The first part discusses how the FAT
+file system and MS DOS partitions work, as well as how files can be
+undeleted.  The second part is the documentation for the Fatback
+program itself.  Users who are inexperienced with the FAT file system
+are encouraged to read the first part.  More seasoned veterans of
+forensics might also find it to be a handy reference when working with
+some of the more advanced features of Fatback.
+
+
+File: fatback-manual.info,  Node: Acknowledgments,  Prev: How to use this manual,  Up: Overview
+
+Acknowledgments
+===============
+
+   My deepest gratitude goes to Gord Hama from the Royal Canadian
+Mounted Police and to Jason Luttgens from NASA.  These individuals
+helped me immensely in understanding the semantics of undeleting files.
+I would also like to thank all the people who helped me in testing the
+program, I am forever indebted.
+
+
+File: fatback-manual.info,  Node: FAT File System Basics,  Next: Using Fatback,  Prev: Overview,  Up: Top
+
+FAT File System Basics
+**********************
+
+   Learning to use Fatback requires that a user must have a basic
+understanding of how Microsoft style disk partitioning and the FAT file
+system work.  This chapter is intended to help less experienced users
+fulfill that prerequisite (1).
+
+* Menu:
+
+* Partitions::
+* Volume Boot Records::
+* FAT Tables::
+* Directories::
+* Undelete Methodology::
+
+   ---------- Footnotes ----------
+
+   (1) It is recommended that you have knowledge of what a "file system"
+is, and what a "partition" is before continuing.
+
+
+File: fatback-manual.info,  Node: Partitions,  Next: Volume Boot Records,  Prev: FAT File System Basics,  Up: FAT File System Basics
+
+Partitions
+==========
+
+   Early version of DOS only supported up to four partitions per disk
+drive.  This was because they had to fit the partition table and
+initial boot program had to fit into a single 512 byte sector.  Twenty
+years later things still work pretty much the same, except for one new
+change.  One of the four partitions can be an extended partition which
+tells where more partitions can be found.  MS DOS calls partitions that
+live within and extended partition "Logical Drives".  The only
+terminology I will use is in this text is "partition", because all
+partitions are created equal.
+
+   The `fdisk' program provides a way to add and delete partitions, as
+well as modify the system indicator byte and bootable flag.  However,
+for more advanced editing, a hex editor or the Norton DiskEdit program
+are much better solutions.
+
+* Menu:
+
+* Partition Table Contents::
+* Extended Partitions::
+
+
+File: fatback-manual.info,  Node: Partition Table Contents,  Next: Extended Partitions,  Prev: Partitions,  Up: Partitions
+
+Partition Table Contents
+------------------------
+
+   A partition table consists of four 16 Byte entries.  Each entry
+contains the following data:
+BOOTABLE PARTITION FLAG
+     The bootable flag lets the DOS boot loader know that the partition
+     can be booted.  MS DOS requires that only one partition be marked
+     as bootable or "active".  If more than one partition is marked
+     active a message like `Invalid partition table'.
+
+STARTING CHS
+     The starting CHS(1) tells where the partition starts on the hard
+     drive physically.
+
+SYSTEM INDICATOR BYTE
+     The system indicator is a single byte that describes the file
+     system that resides on the partition.  Each file system type has a
+     file system ID.  For instance, a primary FAT 16 partition that is
+     larger than 32 Mb would have a file system ID of 06h.  One major
+     limitation of the system indicator byte is that it is only 8 bits,
+     which provides only 256 unique file system types.  Setting this
+     byte in a partition table entry to a value that is unrecognized by
+     DOS would make DOS ignore that file system.
+
+ENDING CHS
+     The ending CHS tells where the partition ends on the hard drive
+     physically.
+
+RELATIVE SECTOR OFFSET
+     The relative sector offset is the number of sectors before the
+     partition on the disk.  It could also be described as the number
+     of sectors between the starting CHS and cylinder 0, head 0, sector
+     1.
+
+SECTOR COUNT
+     The total number of sectors in the partition
+
+   ---------- Footnotes ----------
+
+   (1) CHS stands for Cylinder/Head/Sector used in referencing physical
+drive geometry.  For more information read `Upgrading and Repairing
+PCs' by Scott Mueller, published by QUE Corporation.
+
+
+File: fatback-manual.info,  Node: Extended Partitions,  Prev: Partition Table Contents,  Up: Partitions
+
+Extended Partitions
+-------------------
+
+   The primary partition table of a hard drive resides in the first
+sector of the hard drive, which is known as the "Master Boot Record",
+or "MBR".  One entry in the primary partition table may be an extended
+partition.  An extended partition is a partition that can hold a chain
+of other partitions within it.  The first sector of an extended
+partition contains a partition table which is of the same form as the
+primary partition table.
+
+   The convention used by MS DOS is to only use the first two entries
+in partition tables within the extended partition.  The first entry
+will define a usable partition (if any).  If another partition after
+the current one exists in the extended partition, then the second entry
+in the partition table will point to the next partition table.
+Otherwise, it will be blank, indicating that it is the last partition
+in the chain.
+
+   MS DOS stops parsing a partition table when it has either read four
+entries, or encountered a blank entry.  A partition can be hidden by
+being placed after a blank entry.
+
+
+File: fatback-manual.info,  Node: Volume Boot Records,  Next: FAT Tables,  Prev: Partitions,  Up: FAT File System Basics
+
+Volume Boot Records
+===================
+
+   The first sector of a partition is call a "Volume Boot Record", or
+"VBR".  The purpose of the volume boot record is to describe a FAT file
+system.  It does so with the following data:
+
+DOS VERSION
+     The DOS version string is an 8 byte ASCII text string that
+     identifies the manufacturer and version of the operating system
+     used to create the file system.
+
+BYTES PER SECTOR
+     The bytes per sector value represents the number of bytes that are
+     in each sector of the media that the file system was created on.
+     This is typically set to 512.
+
+SECTORS PER CLUSTER
+     The sectors per cluster value represents the number of physical
+     sectors that are in each cluster.  Clusters are the basic
+     allocation unit of the FAT file system. *Note FAT Tables::, for
+     more information on clusters.
+
+MAXIMUM ROOT DIRECTORY ENTRIES
+     In the FAT12 and FAT16 file systems, a root directory is a fixed
+     size.  This value represents the number of 32 byte entries the
+     root directory can hold.  FAT32 systems support a variable size
+     root directory, and therefore this field is meaningless in that
+     file system.
+
+MEDIA DESCRIPTOR BYTE
+     Some DOS version use the media descriptor byte to determine the
+     characteristics of the disk drive in which the partition resides.
+     For example hard disk drives will have a media descriptor byte
+     value of F8h and a 3 1/2" floppy disk may have a value of F0h.
+
+VOLUME SERIAL NUMBER
+     The volume serial number is a 32-bit randomly generated number
+     used to uniquely identify a file system.
+
+VOLUME LABEL
+     The volume label string is an 11 byte ASCII text string that
+     identifies the file system to DOS.  This value is input by the
+     user upon execution of the `format' command.
+
+FILE SYSTEM ID
+     The file system ID string is an 8 byte ASCII text string that
+     describes the file system that resides on that partition.  One
+     must be aware, however, that operating systems do not use this
+     string to determine the file system of the drive and is
+     essentially useless.
+
+
+File: fatback-manual.info,  Node: FAT Tables,  Next: Directories,  Prev: Volume Boot Records,  Up: FAT File System Basics
+
+File Allocation Tables
+======================
+
+   Immediately following a volume boot record in a partition, comes the
+file allocation tables ("FAT tables" abbreviated).  There are almost
+always two FAT tables per file system.  The system only actively uses
+one FAT table, and so the other FAT tables serve as back-ups.
+
+   Despite the name _file_ allocation table, the purpose of the FAT
+table is not to allocate files, but rather to allocate and manage the
+linkage of "clusters".  Clusters are the basic unit of storage of the
+FAT file system.  They are made up of one or more physical sectors, how
+many depends on how large the file system is.  For example, on a 720 KB
+floppy disk the cluster size would probably be 2 sectors, and on a hard
+disk partition, probably 4 or more sectors.
+
+   The numbers 12, 16, and 32 that usually follow the word FAT in
+describing the exact version of file system refer to the number of bits
+that represent each cluster number in the FAT table.  The FAT table is
+simply a linear array of numbers who's index represents a cluster on
+the disk.  For example in a FAT16 file system, the fiftieth 16 bit
+value in the FAT table would correspond to the fiftieth cluster in the
+file system.
+
+   The allocation of a cluster is determined through the value its FAT
+table entry.  Unused cluster should have a FAT table value of 0, while
+used clusters should have either the number of another cluster, or the
+EOF(1) value.
+
+   If the value of a FAT table entry is set to a cluster number, it is
+said to be "chained" to that cluster.  The cluster that the value of
+the entry refers to represents the next block of data in a file.  The
+repeated iteration of this process creates "cluster chains".
+
+   When a file is written to a FAT file system, the operating system
+must first determine how many clusters it will take to hold the
+contents of that file.  For example on a file system with a cluster
+size of 2048 bytes (four 512 byte sectors), a 5000 byte file would take
+three clusters to hold its contents.
+
+   ---------- Footnotes ----------
+
+   (1) not the same as the EOF character used in the ASCII text
+encoding system.
+
+
+File: fatback-manual.info,  Node: Directories,  Next: Undelete Methodology,  Prev: FAT Tables,  Up: FAT File System Basics
+
+Directories
+===========
+
+   FAT file systems store directory information as a list of 32 byte
+directory entries, terminated by a null entry or the end of the cluster
+chain.
+
+* Menu:
+
+* Directory Entries::
+* Long File Names::
+
+
+File: fatback-manual.info,  Node: Directory Entries,  Next: Long File Names,  Prev: Directories,  Up: Directories
+
+Directory Entries
+-----------------
+
+   Directory entries can be either files, directories, or under more
+modern DOS systems, long file name fragments (*note Long File Names::).
+Each entry that is a file or directory contains the following data:
+
+FILE NAME
+     MS DOS names files in two parts, the file name, and the extension.
+     The accepted convention is to separate these fields with the "."
+     character, however in a directory entry, there is no such
+     character.  One must note that in a directory entry, the extension
+     field immediately follows the file name field.  For example, if
+     you created a file named `MYREPORT.DOC', it would look like
+     `MYREPORTDOC' in the raw directory.
+
+ATTRIBUTES
+     File attributes are stored in an 8 bit field of the directory
+     entry, with each bit representing a flag.  Out of the eight
+     possible flags, only six are widely used by DOS systems.
+
+     Attributes of a file can be viewed within a DOS environment using
+     the `attrib' command.  It is also one of the only ways to list
+     hidden files.
+
+    READ-ONLY
+          Files with read-only attribute set can not be written to by
+          normal DOS systems.
+
+    HIDDEN
+          The hidden flag hides files from normal viewing.  This is
+          common among system files.
+
+    SYSTEM
+          When a system file has the system attribute set, normal
+          directory operations will skip over it, making it harder to
+          accidentally ruin your system.
+
+    VOLUME
+          The volume attribute is used to indicate that a directory
+          entry is the label for the volume in which it resides.  The
+          volume label is only allowed to exist in the root directory.
+
+    SUB DIRECTORY
+          An entry must have the sub directory attribute set in its
+          directory entry in order to be treated as a directory.  It
+          also makes the file unable to be opened by conventional
+          means.  Operating systems usually provided special interfaces
+          for opening directories.
+
+    ARCHIVE
+          The archive flag is used by backup programs to tell whether a
+          file should be backed up.  In most cases, when a backup
+          program backs up a file, it turns off this flag, and when the
+          file gets modified the flag gets turned back on to indicate
+          that it has changed and needs backing up.
+
+TIME AND DATE OF CREATION
+     The creation time and date field keeps track of the when the file
+     was created, or last modified.
+
+STARTING CLUSTER
+     The starting cluster field marks where the data for the given
+     entry actually resides by indicating the first cluster in a
+     cluster chain (*note FAT Tables::, for information about cluster
+     chains).
+
+FILE SIZE
+     The file size field tells how much data is in the given file (in
+     bytes).  For entries that are sub directories, this field is 0.
+     Directories have no need for file size as they are terminated by a
+     null entry or the end of a cluster chain.
+
+* Menu:
+
+* Long File Names::
+
+
+File: fatback-manual.info,  Node: Long File Names,  Prev: Directory Entries,  Up: Directories
+
+Long File Names
+---------------
+
+   Long file names are "UNICODE"(1) names that can be up to 819
+characters per name.  To achieve this, the names are split up into 32
+byte fragments that fit into directory entries, and placed in the
+directory in reverse order with the associated file entry immediately
+following.
+
+   Long file name fragments can be identified by the attributes field,
+which will have the Read-Only, Hidden, System, and Volume flags set.
+
+   ---------- Footnotes ----------
+
+   (1) UNICODE is a text encoding system using multiple bytes of data
+to represent each character to provide a larger character set than the
+255 character ASCII set.  UNICODE is often used for languages other
+than English.
+
+
+File: fatback-manual.info,  Node: Undelete Methodology,  Prev: Directories,  Up: FAT File System Basics
+
+Undelete Methodology
+====================
+
+   You do not need to know the detailed semantics of how files are
+undeleted to use the Fatback program.  However, if you seek a better
+understanding of what is involved in undeleting files and directories,
+then you will be interested in the information presented in this
+section.
+
+
+   All methods of undeleting presented here require the recovery of
+cluster chains  (*note FAT Tables::, for more info on cluster chains).
+Recovering cluster chains is not guaranteed to give you accurate data.
+If another file or directory in the file system has used a cluster in
+the chain since the file was deleted, that cluster will no longer be
+valid data to recover.  In order to tell if a file is able to be
+recovered accurately, you need to know what files are using which
+clusters.  It is this reason that hand recovering files is not a very
+productive use of your time.
+
+* Menu:
+
+* How Files Can Be Recovered::
+* How Directories Can Be Recovered::
+
+
+File: fatback-manual.info,  Node: How Files Can Be Recovered,  Next: How Directories Can Be Recovered,  Prev: Undelete Methodology,  Up: Undelete Methodology
+
+How Files Can Be Recovered
+--------------------------
+
+   When a file or directory is deleted from a FAT file system, the
+first letter of its file name is set to the sigma character (ASCII
+0xE5).  All of the information with the exception of the first
+character remains in tact.
+
+   A more devious method of hiding a file is to place the entry after a
+blank entry in a directory.  Then, when an operating system reads the
+directory, it will stop reading the directory before reaching the
+hidden entry.  This should not happen by default on DOS systems.  For a
+file to be hidden in this fashion would require either special tools or
+manual directory manipulation.
+
+   In most cases, a deleted file can be recovered by simply copying the
+cluster chain that is referenced by the file entry.
+
+
+File: fatback-manual.info,  Node: How Directories Can Be Recovered,  Prev: How Files Can Be Recovered,  Up: Undelete Methodology
+
+How Directories Can Be Recovered
+--------------------------------
+
+   The cluster chain that a file entry points to remains in tact after
+the file is deleted.  The opposite, however, occurs for directories.
+Upon deleting a directory entry, the first cluster that the entry
+points to has a FAT table value of that represents that the cluster is
+unused instead of the EOF marker or the number of the next cluster in
+the chain.  This makes it difficult to recover deleted directory
+information beyond the first cluster.
+
+   Using a trained eye, some directories can be fully reconstructed.
+Take, for example, the following case:
+
+     You want to recover a directory, but only the first cluster can
+     easily be identified.  Upon examination of the contents of this
+     cluster, you find that the last few directory entries are the
+     files `MYFILE1.TXT', `MYFILE2.TXT', and `MYFILE3.TXT'.  Seeing as
+     how the cluster is completely used by entries, your keen skills
+     and experience lead you to believe that there is more to this
+     directory than this cluster.  You search for lost cluster chains
+     in the file system.  You then sift through the list, eliminating
+     those which do not appear to be directory data.  Out of the
+     remaining lost chains, you notice that one of them starts with the
+     files `MYFILE4.TXT' and `MYFILE5.TXT'.  You make note of the
+     starting cluster of that chain.  Then you edit the FAT table and
+     change the entry for the first cluster of the directory from
+     unused to the cluster number of the newly found chain.  You take a
+     moment to gaze upon your victory, as you have just successfully
+     reconstructed a deleted directory.
+
+   Each sub directory begins with two entries.  One entry for the
+current directory (the `.' entry), and one entry for the parent
+directory (the `..' entry).  Another technique to find sub directories
+that may be missed by other methods is to search for one of these
+entries in free clusters.  These entries can be uniquely identified by
+a single dot followed by ten spaces or two dots followed by nine
+spaces.  This is due to the fact that the file name field of a
+directory is eleven characters long.  *Note Directory Entries::.
+
+
+File: fatback-manual.info,  Node: Using Fatback,  Next: Concept Index,  Prev: FAT File System Basics,  Up: Top
+
+Using Fatback
+*************
+
+   In order to cater to users with a variety of experience levels,
+Fatback provides two ways of interacting.  The first method is called
+"automated" mode and input is solely given on the command line.  This
+method is for users who simply want to recover all files (or just
+deleted files) from a partition and not be bothered by the details.
+The second method is called "interactive" mode.  In interactive mode, a
+user interacts with Fatback through a command interpreter which mimics
+the look and feel of a traditional UNIX shell.  Interactive mode is
+recommended for users that want to do more advanced undeleting.
+
+   There is no difference in the undelete technique of the two
+different modes.  When a user runs Fatback in automated mode, it is
+actually running predefined or "canned" commands through the fatback
+interpreter.
+
+   The only limitation of the automated mode (as of version
+1.3) is that it will only process a single partition.
+
+   To run Fatback, type the program name (`fatback'),  then type any
+options you wish to pass to Fatback.  The last argument on the command
+line should be the name of the input file.  Here is the command syntax:
+     fatback OPTIONS INPUT-FILE
+   The options can either be a letter or a word and may or may not
+require any arguments.  For example, to specify a file to place the
+audit log into, you may can use the `-l' flag or the `--log' flag.
+These options require an argument.  To specify the required argument
+with the `-l' option, use `-l FILE'.  To specify the argument with the
+`--log' option, use `--log=FILE'.
+
+   The input file can be either a device (a file in the `/dev'
+directory) or an image of a drive or partition.
+
+* Menu:
+
+* Audit Logs::
+* Command Line Options::
+* The Fatback Interpreter::
+* Run-time Variables::
+
+
+File: fatback-manual.info,  Node: Audit Logs,  Next: Command Line Options,  Prev: Using Fatback,  Up: Using Fatback
+
+Audit Logs
+==========
+
+   Fatback uses audit logs to keep a record of operations performed in
+a session.  The data it logs includes the commands the user types, the
+command line used to execute the program, the users environment,
+information about the partition being analyzed, and information about
+each file that was recovered.
+
+   By default, the audit log will be written to a file called
+`fatback.log' in the current directory.   To store the audit log to a
+different location, use the `-l FILE' or `--log=FILE' switch.
+
+
+File: fatback-manual.info,  Node: Command Line Options,  Next: The Fatback Interpreter,  Prev: Audit Logs,  Up: Using Fatback
+
+Command Line Options
+====================
+
+   Fatback version 1.3 provides the following command line options:
+
+`-a'
+`--auto'
+     Run Fatback in automatic undelete mode.  This mode will attempt to
+     recover all deleted files in a given partition, and only that
+     partition.  If the input data is a partitioned drive, use the `-p
+     NUMBER' or ` --partition=NUMBER' option to specify which partition
+     to use.
+
+`-o DIRECTORY'
+`--output=DIRECTORY'
+     Place recovered files into the directory specified.  If Fatback is
+     run in automatic undelete mode, or if a recursive copy is
+     performed, sub directories will be created underneath the output
+     directory that correspond to directories in the partition that
+     Fatback is working with.
+
+`-l LOG-FILE'
+`--log=LOG-FILE'
+     Place the audit log into the specified file.
+
+`-v'
+`--verbose'
+     Display extra information to the screen.
+
+`-p PARTITION-NUMBER'
+`--partition=PARTITION-NUMBER'
+     Process a specific partition of a partitioned drive.  This is
+     necessary to use auto mode with a partitioned drive.  In
+     interactive mode, the partition menu will be bypassed.
+
+`-d'
+
+`--delprefix=PREFIX'
+     Use PREFIX as the beginning of the name of deleted files.  The
+     default value is '?'.
+
+`-s'
+`--single'
+     Treat input as a single partition without checking for partitions.
+
+`-z SECTOR-SIZE'
+`--sectsize=SECTOR-SIZE'
+     Use SECTOR-SIZE as the sector size of the input data instead of the
+     default value of 512.
+
+`-h'
+`--help'
+     Display a help screen and terminate
+
+`-V'
+`--version'
+     Display the Fatback version number and terminate.
+
+
+File: fatback-manual.info,  Node: The Fatback Interpreter,  Next: Run-time Variables,  Prev: Command Line Options,  Up: Using Fatback
+
+The Fatback Interpreter
+=======================
+
+   If Fatback is run without the `-a' or `--auto' option, it enters
+what is called "interactive" mode.  In interactive mode,  Fatback gives
+you a prompt to which you can enter commands and direct Fatback to
+perform more specific tasks than the automatic undelete mode.
+
+   If the input is a partitioned drive, Fatback will first display a
+menu of possible partitions and prompt you for which you would like to
+work with.  Fatback will then enter the partition and you may begin
+exploring and recovering files!
+
+   The command interpreter is loosely modeled after the classic UNIX
+shell environment.  The interpreter provides a prompt (`fatback>' by
+default), and mimics several UNIX shell commands such as `ls', `cd',
+`pwd' , `cp', and many others.
+
+   Fatback version 1.3 has the following commands:
+
+`cd'
+     Change to a specified directory
+
+`copy'
+`cp'
+     Copy files out to an external file system
+
+`help'
+     Display a list of commands and a brief description of each
+
+`dir'
+`ls'
+     List entries in a directory
+
+`pwd'
+     Print the name of the current directory
+
+`stat'
+     Display detailed information about a directory entry
+
+`chain'
+     Display the cluster chain for a directory entry
+
+`cpchain'
+     Copy a cluster chain out to a file
+
+`lostchains'
+     Display a list of lost cluster chains in the current partition
+
+`sh'
+     Execute a command in the outside environment
+
+`set'
+     Set run-time variables within Fatback
+
+`done'
+     Stop working with the current partition, or exit fatback if in
+     single partition mode.
+
+`quit'
+     Exit Fatback
+
+   The `copy' command is synonymous with `cp', and the `dir' command is
+synonymous with `ls'.  The `copy' and `dir' aliases where created to
+give users who primarily use DOS a familiar interface.  However, the
+Fatback interpreter was designed to mimic a UNIX shell, so the `cp' and
+`ls' forms are preferred and used by all the documentation.
+
+   It is important to note that Fatback is very case sensitive.  All
+directory entries are in upper case, and some may have a long file name
+(*note Long File Names::) associated with it that can be mixed case.
+When specifying directory entries you must use either the exact
+uppercase name, or the long file name.  To specify a long file name
+that contains white space, put the whole name in double quotes.  For
+example, the `Program Files' directory in a windows system can be
+specified by either `PROGRA~1' or `"Program Files"'.
+
+* Menu:
+
+* The cd Command::
+* The cp Command::
+* The ls Command::
+* The stat Command::
+* The chain Command::
+* The cpchain Command::
+* The sh Command::
+* The set Command::
+* The done Command::
+* The quit Command::
+
+
+File: fatback-manual.info,  Node: The cd Command,  Next: The cp Command,  Prev: The Fatback Interpreter,  Up: The Fatback Interpreter
+
+The `cd' Command
+----------------
+
+   The `cd' command has the following syntax:
+     cd DIRECTORY
+   This will set the current directory to DIRECTORY.  DIRECTORY may be
+any number of layers deeper than the current directory.  For example, to
+change to the `system' directory underneath the `windows' directory
+from the root directory, you would run the following command:
+     cd /windows/system
+
+   The directory names `.' and `..' are reserved for relative path
+specification purposes.  The `.' is a directory entry that represents
+its parent directory.  For example, specifying `MYDIR/.' is the same as
+specifying `MYDIR' because the `.' specifies its parent, which is
+`MYDIR'.  Similarly, the `..' entry specifies the parent directory of
+the parent directory of itself.  An example of this would be
+`MYDIR/SUBDIR/..', which would of course be the same as `MYDIR'.
+
+
+File: fatback-manual.info,  Node: The cp Command,  Next: The ls Command,  Prev: The cd Command,  Up: The Fatback Interpreter
+
+The `cp' Command
+----------------
+
+   The `cp' command is used to copy files from the fatback environment
+out to the host file system.  It has the following syntax:
+     cp OPTIONS FILES TO-DIRECTORY
+   FILES can be specified as any number of file names, or patterns.
+Patterns are used to specify many files at once by using special
+sequences of characters.  The most commonly used patters are `*', `?',
+and `[]'.  The `*' character is used to specify zero or more characters
+of any kind, `?' specifies one character of any kind, and `[]'
+specifies a single character of a specific set.
+
+Patterns
+........
+
+   When used by its self, the `*' character will match all files in a
+directory.  For example the following command would copy all the files
+in the current directory to the `/mnt/data' directory in the hosts file
+system:
+     cp * /mnt/data
+   The `*' character can also be used in conjunction with other.  For
+example, the following command will copy all files that end in `.exe' to
+the `/mnt/data' directory:
+     cp *.exe /mnt/data
+
+   Here is an example of using the `?' character to copy all the files
+in the `SETUP' directory that have a single character for an extension
+to the `/mnt/data' directory:
+     cp SETUP/*.? /mnt/data
+
+   The `[]' pattern is a bit more complex than the previous examples.
+Between the left and right bracket is where a specific set of matching
+characters is specified.  For example, the pattern `[abc]' would match
+the letter `a', `b', or `c'.  Ranges or characters can also be
+specified using the `-' character in between two other characters.
+Using this syntax, all the letters in the alphabet can be specified
+using the pattern `[a-z]'.
+
+   Patterns can be combined for even greater power.  If you copy all
+the files in the current directory that begin with a number and end
+with the extension `.dat' to the `/mnt/data' directory, the following
+command could be used:
+     cp [0-9]*.dat /mnt/data
+   For more information on the syntax of the patterns, consult your
+systems man pages under globs(7).
+
+`cp' command options
+....................
+
+   The `cp' command accepts two options, `-d' and `-R'.  The `-d'
+option tells `cp' to only copy files that are deleted, and skip over
+active file entries.  The `-R' option makes the command recurse down
+any sub directories it finds.  To undelete all the files in a partition
+to the `/mnt/data' directory, use the following command:
+     cp -d -R /* /mnt/data
+
+
+File: fatback-manual.info,  Node: The ls Command,  Next: The stat Command,  Prev: The cp Command,  Up: The Fatback Interpreter
+
+The `ls' Command
+----------------
+
+   The `ls' is used to display entries in a directory.  The syntax for
+`ls' is as follows:
+     ls DIRECTORY
+
+   The entries in the specified DIRECTORY are displayed.  If no
+DIRECTORY is specified, entries in the current directory are displayed.
+Multiple directories can also be displayed at the same time by
+specifying more than one directory, or by using a pattern.
+
+
+File: fatback-manual.info,  Node: The stat Command,  Next: The chain Command,  Prev: The ls Command,  Up: The Fatback Interpreter
+
+The `stat' Command
+------------------
+
+   The `stat' command displays detailed information about a directory
+entry.  This information includes all information displayed with `ls',
+plus additional information such as the cluster chain, and creation
+date. The `stat' command has the following syntax:
+     stat FILES
+
+
+File: fatback-manual.info,  Node: The chain Command,  Next: The cpchain Command,  Prev: The stat Command,  Up: The Fatback Interpreter
+
+The `chain' Command
+-------------------
+
+   The `chain' command displays the cluster chain of a given directory
+entry or entries.  The syntax for the `chain' is:
+     chain FILES
+   The output of running the `chain' command will be a series of
+numbers.  Each number represents a cluster in the FAT table (*note FAT
+Tables::) that the entry occupies.
+
+
+File: fatback-manual.info,  Node: The cpchain Command,  Next: The sh Command,  Prev: The chain Command,  Up: The Fatback Interpreter
+
+The `cpchain' Command
+---------------------
+
+   The `cpchain' command writes the data in a cluster chain out to a
+file.  It's syntax is as follows:
+     cpchain CHAIN TO-FILE
+   CHAIN is a number value of the starting cluster of the cluster chain
+to be written out.  TO-FILE is where fatback will store the data in the
+host file system.
+
+
+File: fatback-manual.info,  Node: The sh Command,  Next: The set Command,  Prev: The cpchain Command,  Up: The Fatback Interpreter
+
+The `sh' Command
+----------------
+
+   The `sh' command executes a command in the outside environment.  It's
+syntax is simply the command `sh' followed by any commands that you
+would normally execute at a shell prompt.  This can be convenient if,
+for example, you accidentally ran Fatback before you mounted the file
+system where you intended to place to files you are going to undelete
+to.  In this case, you could execute the mount command within a `sh'
+command like this:
+     sh mount /dev/ad0s1 /mnt/extra-hd
+   On a more advanced note, the `sh' is implemented with improved signal
+handling which is not present in the standard UNIX `system()' function.
+This makes it possible to run even dangerous processes without the risk
+of crashing the parent process (fatback in this case).  In other words,
+fear not the `sh' command, for it will only bring good fortune to thee.
+
+
+File: fatback-manual.info,  Node: The set Command,  Next: The done Command,  Prev: The sh Command,  Up: The Fatback Interpreter
+
+The `set' Command
+-----------------
+
+   The `set' command is used to set run-time variables as well as modify
+the current FAT table.  To set run-time variables, use the following
+syntax:
+     set VARNAME=VALUE
+
+   For more information on run-time variables, *Note Run-time
+Variables::.
+
+   The FAT table can be modified by using the following syntax:
+     set CLUSTER-NUMBER=VALUE
+
+   CLUSTER-NUMBER represents an entry in the FAT table and VALUE is the
+cluster that that entry points to.  When a FAT table entry is modified
+with `set', the changes are not purely temporary and memory resident
+only.
+
+   If the command `set' is run with no arguments, then it will display
+a list of the run-time variables and their associated values.
+
+
+File: fatback-manual.info,  Node: The done Command,  Next: The quit Command,  Prev: The set Command,  Up: The Fatback Interpreter
+
+The `done' Command
+------------------
+
+   If the input to Fatback is a partitioned drive, then executing the
+`done' command will cause Fatback to finish editing the current
+partition and return to the partition menu.  Otherwise, if the input is
+a single partition, executing the `done' command will cause Fatback to
+terminate.
+
+
+File: fatback-manual.info,  Node: The quit Command,  Prev: The done Command,  Up: The Fatback Interpreter
+
+The `quit' Command
+------------------
+
+   Unlike the `done' command, executing the `quit' will cause Fatback
+to terminate regardless of whether the input is only a partition or
+multiple partitions.
+
+
+File: fatback-manual.info,  Node: Run-time Variables,  Prev: The Fatback Interpreter,  Up: Using Fatback
+
+Run-time Variables
+==================
+
+   Fatback provides run-time variables as a way of dynamically
+configuring the behavior of its execution during run-time.  Variables
+are set and viewed with the `set' command (*note The set Command::).
+
+   Here is a list of the run-time variables in Fatback version
+1.3:
+
+`verbose'
+     The variable that determines whether or not to display extra
+     information to the screen.
+
+`sectsize'
+     The sector size for fatback to use when making calculations.  This
+     defaults to 512, but if an input drive uses a different size and
+     Fatback does not detect it properly, then set this by hand.  This
+     variable can also be set via the command line using the `-z' or
+     `--sectsize' option.
+
+`prompt'
+     The string that Fatback uses to prompt the user.  This is set by
+     default to `fatback>'.  This probably will be of little interest
+     to most end users, however it is important to note for someone
+     who, for example, plans to write custom automation scripts using
+     Expect(1).
+
+`showall'
+     The variable that determines whether or not to display non-deleted
+     files when the `ls' command is executed.  This variable can be set
+     to either `on' or `off'.  If it set to `on' then all files will be
+     displayed with the `ls' command.  Otherwise, if it is set to `off'
+     then only deleted files will be displayed.
+
+`deleted_prefix'
+     The string that Fatback uses as the first part of the name of
+     deleted files.  The default value is '?'.
+
+   ---------- Footnotes ----------
+
+   (1) Expect is a program for automating interactive programs.  For
+more information visit <http://expect.nist.gov/>.
+
+
+File: fatback-manual.info,  Node: Concept Index,  Next: Command and Variable Index,  Prev: Using Fatback,  Up: Top
+
+Concept Index
+*************
+
+* Menu:
+
+* .:                                     How Directories Can Be Recovered.
+* ..:                                    How Directories Can Be Recovered.
+* attrib:                                Directory Entries.
+* Audit logs <1>:                        Command Line Options.
+* Audit logs:                            Audit Logs.
+* Automated mode:                        Using Fatback.
+* Bootable partition flag:               Partition Table Contents.
+* Case sensitivity:                      The Fatback Interpreter.
+* CHS:                                   Partition Table Contents.
+* clusters:                              FAT Tables.
+* Command line options:                  Command Line Options.
+* delprefix <1>:                         Run-time Variables.
+* delprefix:                             Command Line Options.
+* Directories:                           Directories.
+* Directory entries:                     Directory Entries.
+* DiskEdit:                              Partitions.
+* Extended partitions:                   Extended Partitions.
+* FAT File systems:                      FAT File System Basics.
+* FAT tables:                            FAT Tables.
+* Fatback interpreter:                   The Fatback Interpreter.
+* fdisk:                                 Partitions.
+* Features:                              Overview.
+* File attributes:                       Directory Entries.
+* File names:                            Directory Entries.
+* File system ID byte:                   Volume Boot Records.
+* format:                                Volume Boot Records.
+* help:                                  Command Line Options.
+* Interactive mode:                      Using Fatback.
+* log:                                   Command Line Options.
+* Logical drives:                        Partitions.
+* Long file names:                       Long File Names.
+* Manual layout:                         How to use this manual.
+* Master boot record:                    Extended Partitions.
+* Maximum root directory entries:        Volume Boot Records.
+* Media descriptor byte:                 Volume Boot Records.
+* Methods of recovering directories:     How Directories Can Be Recovered.
+* Methods of recovering files:           How Files Can Be Recovered.
+* output:                                Command Line Options.
+* Partition tables:                      Partition Table Contents.
+* Partitions:                            Partitions.
+* Patterns:                              The cp Command.
+* prefix:                                Command Line Options.
+* Relative sector offset:                Partition Table Contents.
+* Run-time variables:                    Run-time Variables.
+* Sigma character:                       How Files Can Be Recovered.
+* Sub directories:                       How Directories Can Be Recovered.
+* System indicator byte:                 Partition Table Contents.
+* Undelete methodology:                  Undelete Methodology.
+* UNICODE:                               Long File Names.
+* Using Fatback:                         Using Fatback.
+* version:                               Command Line Options.
+* Volume boot records:                   Volume Boot Records.
+* Volume label:                          Volume Boot Records.
+* Volume serial number:                  Volume Boot Records.
+
+
+File: fatback-manual.info,  Node: Command and Variable Index,  Prev: Concept Index,  Up: Top
+
+Command and Variable Index
+**************************
+
+* Menu:
+
+* cd:                                    The cd Command.
+* chain:                                 The chain Command.
+* copy:                                  The Fatback Interpreter.
+* cp:                                    The cp Command.
+* cpchain:                               The cpchain Command.
+* deleted_prefix:                        Run-time Variables.
+* dir:                                   The Fatback Interpreter.
+* done:                                  The done Command.
+* help:                                  The Fatback Interpreter.
+* lostchains:                            The Fatback Interpreter.
+* ls:                                    The ls Command.
+* prompt:                                Run-time Variables.
+* pwd:                                   The Fatback Interpreter.
+* quit:                                  The quit Command.
+* sectsize:                              Run-time Variables.
+* set:                                   The set Command.
+* sh:                                    The sh Command.
+* showall:                               Run-time Variables.
+* stat:                                  The stat Command.
+* verbose:                               Run-time Variables.
+
+
+
+Tag Table:
+Node: Top511
+Node: Overview863
+Node: How to use this manual1728
+Node: Acknowledgments2347
+Node: FAT File System Basics2788
+Ref: FAT File System Basics-Footnote-13325
+Node: Partitions3448
+Node: Partition Table Contents4491
+Ref: Partition Table Contents-Footnote-16166
+Node: Extended Partitions6360
+Node: Volume Boot Records7550
+Node: FAT Tables9803
+Ref: FAT Tables-Footnote-111995
+Node: Directories12077
+Node: Directory Entries12429
+Node: Long File Names15604
+Ref: Long File Names-Footnote-116193
+Node: Undelete Methodology16417
+Node: How Files Can Be Recovered17508
+Node: How Directories Can Be Recovered18458
+Node: Using Fatback20822
+Node: Audit Logs22745
+Node: Command Line Options23390
+Node: The Fatback Interpreter25154
+Node: The cd Command28000
+Node: The cp Command29007
+Node: The ls Command31583
+Node: The stat Command32117
+Node: The chain Command32566
+Node: The cpchain Command33055
+Node: The sh Command33529
+Node: The set Command34538
+Node: The done Command35404
+Node: The quit Command35865
+Node: Run-time Variables36173
+Ref: Run-time Variables-Footnote-137840
+Node: Concept Index37960
+Node: Command and Variable Index41456
+
+End Tag Table

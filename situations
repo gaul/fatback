@@ -1,0 +1,5 @@
+This file is to jot down interesting things and odd situations that might arrise in a FAT filesystem
+
+1.  The cluster chain might not be consistent with the file size.  For example, a file could say that it is 12 bytes long but the cluster chain in the fat could be 200 clusters long.  
+
+2.  If raw directory data were to be stored in a file, and then that file is deleted, odd things could happen.  when the undeleteing process searches for deleted directories in freespace, it would come across that deleted file and positively identify it as a directory and then attempt to undelete the files in that directory. This could have been directory information from another filesystem or whatever.  In this particular instance you could tell that the information was a deleted file due to the directory entry.  However, lets say that the user of the fs deleted a file, then created a directory that started with the same cluster.  There is no way to distinguish between these two events.

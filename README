@@ -1,0 +1,31 @@
+Installation instructions:
+
+in the directory where this file resides, type the following sequence of
+commands:
+
+1. './configure'
+2. 'make'
+3. 'make install'  (optional)
+
+If you are compiling on a system that does not use GNU make as the default
+make, then substitute 'gmake' for 'make' in the above commands.
+
+If you encounter an error while running the commands listed above, see the file
+'INSTALL' in the same directory as this file.  If problems still persist, 
+contact the maintainer (listed in the file 'AUTHORS').
+
+Building documentation:
+
+	The Fatback manual is installed in your systems info tree upon
+execution of 'make install'.  The manual is provided in Texinfo source and can
+be converted into a variety of different formats.  After running the
+./configure script, a Makefile will be generated that knows how to build the
+documentation.  To build the documentation in dvi format (for use with xdvi or
+lpr) just type 'make dvi'.   This will output a file called
+'fatback-manual.dvi', which can be printed with the lpr command:
+'lpr fatback-manual.dvi' or viewed in a graphical format under an X windows
+environment using the Xdvi program as as follows: 'xdvi fatback-manual.dvi'. 
+There is not yet support in the Makefile for all of the formats that are
+supported by Texinfo, such as HTML and PostScript.  To convert the source into
+HTML format, use the following command: 'makeinfo --html fatback-manual.texi'. 
+This will output the file 'fatback-manual.html'
