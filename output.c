@@ -63,9 +63,12 @@ int display(displaylevel_t level, char *format, ...)
      /* print the rest of the arguments in standard printf style */
      va_start(arg_list, format);
      retval = vfprintf(Audit_log, format, arg_list);
-     if ((level < VERBOSE) || (verbose && level == VERBOSE))
-          vfprintf(ostream, format, arg_list);
      va_end(arg_list);
+     if ((level < VERBOSE) || (verbose && level == VERBOSE)) {
+          va_start(arg_list, format);
+          vfprintf(ostream, format, arg_list);
+          va_end(arg_list);
+     }
 
      return retval;
 }
