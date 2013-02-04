@@ -620,7 +620,9 @@ static char *readline(char *prompt)
      /* read all input into a list of buffers */
      do {
           tmp = emalloc(sizeof *tmp);
-          fgets(buffer, FBRL_BUFLEN, stdin);
+          if (fgets(buffer, FBRL_BUFLEN, stdin) == NULL) {
+               return NULL;
+          }
           tmp->text = strdup(buffer);
           tmp->next = NULL;
           if (!list_head)

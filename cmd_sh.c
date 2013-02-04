@@ -25,6 +25,10 @@ void cmd_sh(int argc, char *argv[])
      struct sigaction ignore, saveintr, savequit;
      sigset_t chldmask, savemask;
 
+     memset(&ignore, 0, sizeof(ignore));
+     memset(&saveintr, 0, sizeof(saveintr));
+     memset(&savequit, 0, sizeof(savequit));
+
      if (argc < 2) {
 	  printf("Usage: sh [command]\n");
 	  return;
